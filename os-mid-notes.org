@@ -1,0 +1,1055 @@
+#+title: Midterm Review 
+
+This is the review notes I made during the reviewing process for my operating system in CUHK. The scope generally includes: 
+
+- Process Abstraction
+- Scheduling
+- Memory Abstraction
+- Memory Translation
+- Segmentation
+- Paging & Advanced Paging
+- Swapping
+
+* Lec 2 User-level Programming via System Calls (Process) 
+** Process
+A process is an instance of a *program in execution(running program)*
+- process is /dynamic/ while program is /static/
+- a process is the basic unit for competing the resources and CPU scheduling.
+
+When a program become a process:
+- the program is read into memory
+- a unique process ID is asigned
+- ...
+...
+
+** Process ID
+Each process is given an id
+the system call ~getpid()~ prints the PID of the calling process. 
+
+/UID: the user ID/
+
+** Process creation
+use ~fork()~ to create a process
+
+--------------------------------> parent process
+                       \
+                        \
+                        child process
+return 0 to the child, return the child's pid to the parent
+
+** ~wait()~
+After frok, both parent and child proceed independently. If a parent wants to wait until the child finishes, it executes *wait* or *waitpid*
+#+begin_src c
+pid_t wait(int *stat)
+#+end_src
+stat is a pointer to an integer variable that stores the /exit status/ of the child.
+
+It causes the caller process to pause until a child terminates or stops or the caller receives a signal.
+However, it returns right away if:
+- the process has no children
+- a child has already terminated or stopped but has not yet been waited for
+
+*If a parent terminates first without waiting for its children and the children is still running?* ORPHAN(孤儿)
+
+- If *wait* returns because a child terminated, the return ve is +, the pid of that child. 
+- otherwise, it returns -1 and sets *errno*
+*example*
+#+begin_src c
+  int main(void) {
+      int i;
+      int n=5;
+      pid_t childpid; 
+      int status;
+      pid_t waitreturn;
+      for(i = 1;i < n; ++i)
+        if (childpid = fork()) // parent process
+          break;
+      while(childpid != (waitreturn = wait(&status)))
+// while the child is still running, wait, until the child terminates
+        if ((waitreturn == -1) && (errno!= EINTR))
+          break;
+
+      printf( “My PID:%d, Parent PID: %d\n", getpid(), getppid();
+      return 0;
+#+end_src
+
+** *exec* & *execvp*
+usually, many applications require the child process to execute code different from parent's.
+
+*the traditional way to use the fork-exec combination is to have the child execute the new program*
+
+
+~execvp~
+#+begin_src c
+char *cmd = "ls";
+char *argv[2];
+argv[0] = "ls";
+argv[1] = NULL; // note that the last is always NULL
+execvp(cmd, argv);
+#+end_src
+
+** Process Termination
+
+what happened if the parent of the process is not currently executing a wait() -> /zombie/
+- zombie is not orphan. orphan is the stilling running child process, but zombie has terminated
+- all orphan process are *adopted* by /init/, the process that has PID = 1
+*** Normal & Abnormal Termination
+Normal
+- a return from main
+- n implicit return from main
+- a call to the _exit system call
+- a call to the C function *exit*
+
+Abnormal
+- calling *abort*
+- processing a signal that causes terminaion
+
+May cause a *code dump*
+User-installed exit handler is not called upon abnormal terminaion
+
+** Background Processes
+
+* Lec 3 User-level Programming via System Calls (Memory)
+** malloc()
+#+begin_src c
+  #include <stdlib.h>
+  void* malloc(size_t size);
+#+end_src
+Allcate a memory region on the *heap*
+- *RETURN*
+  + Success: a void type pointer to the memory allcated by ~malloc~
+  + Fail:    a null pointer
+
+Usually use ~sizeof()~ instead of typing in a number directly.
+** free
+#+begin_src c
+  #include <stdlib.h>
+  void* free(void* ptr);
+#+end_src
+
+** Common Error: Forgetting To Allocate Memory
+- Incorrect code
+#+begin_src c
+  char *src = "hello";
+  char *dst; // unallocated
+  strcpy(dat, src); // segfault and die
+#+end_src
+
+- Correct Code
+#+begin_src c
+  char *src = "hello";
+  char *dst = (char *) malloc (strlen(src) + 1); 
+  strcpy(dat, src); 
+#+end_src
+*Note*:
+the extra 1 unit of memory is for the termination
+
+** Memory Leak
+A program runs out of memory an eventually dies
+*unused memory but not freed*
+
+** Dangling Pointer
+Freeing memory before it's finished using, then the program accesses to memory with an invalid pointer
+
+** Double Free
+leads to /undefined error/
+
+** calloc()
+allocate memory on the heap and set with 0 before returning
+** relloc()
+change the size of a memory block
+
+* Lec 4 User-level Programming via System Calls (File & Dictory)
+** File & Directory
+each file has /low-level/ name (*inode number*)
+
+** Creating Files
+#+begin_src c
+int myfd=open("~/Desktop/test.py", O_CREAT|O_WRONLY|O_TRUNC);
+#+end_src
+RETURN: file descriptor
+~read(file descriptor, buffer pointer, numberOfBytesToReadFrom)~
+~write(file descriptor, buffer pointer, numberOfBytesToWriteTo)~
+
+** Reading And Writing, But Not Sequentially
+- An open file had a /current offset/
+  Determine where the next read or write will begin reading from ot writing to within the file.
+- Update the current offset
+  lseek()
+
+** IO Re-direction
+/file descriptor/ is an index into the process /file descriptor table/, which in turn points to an entry in the /system file table/
+
+/Redirection/ means that the process modifies its file descriptor table entry so that it points to a different entry in the system file table.
+like 
+~ls -l > my.file~
+
+** ~dup()~ to implement /redirection/
+#+begin_src c
+int dup(int fd);
+#+end_src
+duplicates the fd to the *lowest-numbered unused file descriptor* in the file descriptor table.
+*Example Code*
+#+begin_src c
+  #include <sys/types.h>
+  #include <sys/wait.h>
+  #include <unistd.h>
+  #include <stdio.h>
+  #include <stdlib.h>
+  #include <sys/stat.h>
+  #include <fcntl.h>
+  int main(void){
+      int fd;
+    
+      fd = open("my.file", O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR| S_IWUSR );
+      close(1); // Close the stdout
+      dup(fd); // change the stdout to be my.file
+      close(fd);
+      char *cmd = "ls";
+      char *argv[3];
+      argv[0] = "ls"; argv[1] = "-l"; argv[2] = NULL;
+      execvp(cmd, argv);
+  }
+#+end_src
+** ~pipe~
+#+begin_src c
+int fd[2];
+int pipe(int fd[2]);
+    return: 0 success
+           -1 error
+#+end_src
+*Example Code*
+#+begin_src c
+/* Use pipe to implement parent/child communication */
+
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+main()
+{
+	int fd[2];
+	int ret;
+        char *cmd;
+        char *argv[3];
+	int fd1;
+	pipe(fd); // build the pipe
+
+	if ( (ret=fork()) > 0 ){ /* Parent process*/
+		close(1); // close the stdout, which means print to the screen
+		dup(fd[1]); // the out of this process is redicted to the *read* of the pipe
+		close(fd[0]);
+		close(fd[1]); 
+
+        	cmd = "ls";
+        	argv[0] = "ls";    
+		argv[1] = "-l";     
+		argv[2] = NULL;
+		execvp(cmd, argv); 
+	}else if (ret == 0 ){
+		/* Child process*/
+		close(0);
+		dup( fd[0]);
+		close( fd[0]);
+		close ( fd[1]);  
+
+		/* Close the stdout*/
+		/* close stdout*/
+		fd1 = open("myfile", O_CREAT |O_TRUNC |O_RDWR, S_IRUSR| S_IWUSR );
+		close(1);
+		dup(fd1);
+		close(fd1);
+
+        	cmd = "wc";
+        	argv[0] = "wc";    
+		argv[1] = "-l";     
+		argv[2] = NULL;
+		execvp(cmd, argv); 
+	} else{
+		/* Error in fork()*/
+		printf("Error occurs when executing fork().\n");
+		exit(-1);
+	}
+}
+
+
+#+end_src
+0 for stdin, 1 for stdout
+
+pipe[0] means reading  pipe->
+
+pipe[1] means writing ->pipe
+
+** Writing Immediately with fsync()
+#+begin_src c
+int fsync(int fd)
+#+end_src
+- force all *dirty* (not yet written but modified or not) data written to disk
+- ~fsync()~ returns once all of theses writes are complete.
+
+** Renaming Files
+~rename(char* old, char *new)~
+- rename a file to differnet name
+** Remove Files
+~unlink()~ to remove a file
+** Hard Link & Sybolic Link
+* Lec 5 Virtualizing CPU Process
+** The Abstraction Process
+*** Process State
+A process can be one of three states:
+- *running*
+- *ready*: is ready to run but OS has chosen no to run it at this moment
+- *blocked*
+  + A process has performed some kind of operation
+  + When a process *initiates an I/O* to a disk, it becomes blocked and thus some other process can use the processor
+*** Key Data Structures
+*process list*
+*register context*
+
+** LDE Mechanism
+OS needs to share the physical CPU by *time sharing*
+Care about *performance & control*
+
+*** Direct Execution
+Without /limits/ on running programs, the OS wouldn't be in control of anything.
+
+*** Problem 1: Restricted Operation
+A process wishes to perform some kind of restricted operations like:
+- Issuing an I/O request to a disk.
+- Gaining access to more system resources such as CPU or memory
+
+*Solution*: use protected control transfer
+- User mode: apps do not have full access to haedware resources
+- Kernel mode: The OS access to the full resources of the machine
+
+*** Limit Direction Execution Protocol
+
+
+
+*** Switching Between Process
+How can OS regain control of the CPU so that it can switch between processes?
+- *wait for system calls*
+- *OS takes control*
+
+*** Cooperative: Wait for system calls
+
+Processse *periodcally give up the CPU* by making system calls like ~yield~
+However, if a process gets stuck in an infinite loop -> REBOOT the machine
+
+*** Non-cooperative
+*timer-interrupt*
+- during the boot sequence, OS start the timer.
+- Timer *raises an interrupt* every so many milliseconds.
+- When the interrupt is raised:
+  + halt the currentlt runnign process
+  + save enough of the state of the program 
+  + A pre-configured interrupt handler in the OS runs
+
+*A timer interrupt gives OS the ability to run again on a CPU*
+
+*** context switch
+This is a low-level piece of assembly code
+- Save the values of necessary registers for the current process onto its kernel stack
+  + general purpose registers
+  + PC
+  + kernel stack pointer
+- *Restore the register values* for the soon-to-be-executing process from its kernel task
+
+*The assembly code is a good source to learn*
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+* Lec 6 Schduling
+** Top Four Assumptions
+1) Each job runs for the *same amount of time*
+2) All job *arrive* at the same time
+3) All job only use the *CPU*
+4) *Run-time* of each job is already know.
+** Metircs (量度)
+- Performance metirc: *turnaround time*
+#+begin_equation
+T_turnaround = T_completion - T_arrival
+#+end_equation
+- *fairness*
+  performance and fairness are often at odds in scheduling
+  (矛盾的)
+
+** FIFO or FCFS(/first come, first serverd/)
+this is a simple approach but nit great enough. 
+*** Why not great? The *convoy effect*
+if we relax the assumption 1: job can run in different time
+*when a bloodly long* process comes first but comes with some short-duration process, the *average turnaround time* will be efffected.
+
+** SJF(Shortest Job First)
+This is a non-preempitve(不插队型) schduling scheme
+
+*Problem*: if we relax the assumption 2: Jobs can arrive at any time.
+
+then the late arrival of *short process* will effect the turnaround time.
+
+** STCF (Short Time To Completion First)
+Add *preemption* to SJF, is also called PSJF
+
+When a new job enters the system, OS determine of the remaining job and the new job
+OS schedules the job which has the least time left
+
+** Introduce a new metric: *Reponse Time*
+#+begin_equation
+T_response = T_firstrun - T_arrival
+#+end_equation
+
+How to build a scheduler that is senstive to reponse time?
+** RR Scheduling
+RR is totally fair but has bad performance at /turnaround time/
+
+*** Length of the time slice is *critical*
+- Short time slice
+  + Better response time
+  + the cost of context switching will dominate overall performance
+    /因为context switch的次数变多了哇/
+- Long time slice
+  + Amortize(分期偿还) the cost of switching
+  + Worse response time 
+
+** Incorporating I/O
+
+*when a job initiates an I/O request*
+- The job is blocked waiting for the I/O completion
+- The scheduler should schedule another job on the CPU
+
+*When the I/O completes*
+- An interrupt is raised
+- The OS moves the process from blocked back to the ready state
+
+** MLFQ
+*** Basic Rules
+A scheduler that learns from the past to predict the future
+*Objective*
+- Optimize *turnaround time* -> run shorter jobs first
+- Minimize response time without /a prior knowledge of job length/
+
+Has a number of distinct *queues*, and each queue is assigned a different priority level
+
+A job that is ready to run on a single queue
+- use round-robin schduling among jobs in the same queue
+
+MLFQ varies the priority of a job on /its observed behavior/
+- A job repeatedly relinquishes the CPU while waiting IOs->Keep its priority high
+- A job uses the CPU intensively for long periods o time->reduce the priority
+*** How to change priority
+Rule 3: when a job enters the system, it is placed at the higest priority
+
+Rule 4a: If a job uses up an entire time slice while running, its priority is reduced
+
+Rule 4b: If a job gives up the CPU before the time slice is up, it stays at the same priority level
+
+In this manner, MLFQ approximates SJF
+
+*** What about I/O
+Assumption:
+- *Job A*: A long-running CPU-intensive job
+- *Job B*: An interactive job that need the CPU only for 1ms before performing an I/O
+
+*The MLFQ approach keeps an interactive job at the higest priority* 
+
+*** Problems with the Basic MLFQ
+- Starvation
+  if there are "too many" interactive jobs in the system, then long-running jobs will never receive any CPU time
+
+- Game(Trick) the scheduler
+  After running 99% of a time slice, issue an I/O operation, then the job gain a higher percentage of CPU time
+
+- A program may change its behavior over time
+  CPU bound process -> I/O bound process
+
+*** Boost
+After some time period S, move all the jobs in the system to the topmost queue.
+
+*** The modified Rule 4
+Once a job /uses up its time allotment/ at a given level(regardless of how many times it has given up the CPU), *its priority is reduced*
+
+
+
+  
+
+
+* Proportional Share
+** Proportional Share Scheduler
+- /Fair-share/ scheduler
+  + Guarantee that each job obtain /a certain percentage/ of CPU time
+  + Not optimized for turnaround or response time
+** Basic Concept
+- Tickets
+  + Represent the *share of a resource* that a process shuold receive
+  + *The percent of tickets* represents its share of the system resource in question
+
+- Example
+  + There are 2 processes, A and Back
+    - A has 75 tickets
+    - B has 25 tickets
+
+** Lottery Scheduling
++ The scheduler picks _a winning ticket_(Randomly)
+  load the state of that winning process and runs it
+
+** Ticket Mechanism
+to manipulate tickets
+*** Ticket Currency
+- a user allocates tickets among their own jobs in whatever currency they would like
+- The system converts the currency into the correct global value
+
+- *example*
+  200 tickets in totoal, and this is the global currency
+  Process A has 100 tickets
+  Process B has 100 tickets
+
+UserA: 500 to A, 500 to B, these are in the A's currency
+User B for the similar logic
+
+*** Ticket Transfer
+A process can temporarily /hand off/ its tickets to another process
+*** Ticket inflation（通货膨胀）
+A process can temporarily raise or lower the number it owns.
+If any one process needs more CPU time, it can boost its tickets.
+
+** Implementation
+Assume there are three processes A, B and C. 
+Keep the processes in a list:
+
+head -> jobA ->jobB -> jobC-> NULL
+        100    50      250
+
+We introduce another metric ~U~, the unfairness metric
+the time of the first job completes divided by the time that the second job
+completes.
+there are two jobs, each jobs has runtime 10
+- First job finishes at time 10
+- Second job finishes st time 20
+
+U = 10 / 20 = 0.5
+U will be close to 1 when both jobs finish at nearly the same time
+
+
+
+
+** Stride Scheduling
+- *stride* of each process:
+  A large number / the number of tickets of the process
+
+Aprocess runs, increment a counter(=pass value) for it by its stride
+Pick the process to run that has the lowest pass value
+#+begin_src c
+current = remove_min(queue);
+schedule(current);
+current->pass += current->stride;
+insert(queue, current);
+#+end_src
+
+* Multiprocessor Scheduling
+Adding more CPUs does not make that single application run faster. Unless you wirte a multi-thread program to make the program run parallel
+
+** Single CPU with Cache
+*cache*
+- Small fast memories
+- hold copies of popular data that is found in the main memory
+- Utilize /temporal/ and /spatial/ locality
+
+*By keeping data in cache, the system can make slow memory appear to be a fast one*
+** Cache Coherence
+Don't forget synchronization
+
+** Single Queue Multiprocessor Scheduling(SQMS)
+
+* Segmentation
+
+What is it?
+
+I guess we need to do a quick review on some important concepts mentioned before:
+
+** Address Space
+machines are expensive, people want to share machines more effectively. The era of *multiprogramming* was born.
+Then people began demanding more of machines, *time sharing* was born
+*Time sharing*: run a process under a full access of memory, the previous process's state was stored in disk. When it's time to run another process, read the state of the previous process from the disk
+
+To realize it, create a *easy to use* abstraction of *physical memory*, which is called *address space*, it contains *all the memory state* of the running program.
+- *code* of the program(instrucations),
+- *stack*, local vars, pass param, return values to&from routines.
+- *heap*, used for dynamically-allocated, user managed memory,
+  + ~malloc()~
+*In our context, we assume the three components is all we need.*
+There may still exist *free* space
+
+Imagine:
+Given a 16KB address space, /program code/ lies on the top, consume 1KB,
+code is *static*, so put it on the top
+
+However, the other 2 regions of address space may /grow&shrink/
+
+Place stack at the bottom, and place heap next to the heap, beacuse we wish *they can grow*
+- *heap* can grow by calling ~malloc()~, stack can grow when when making a procedure call
+- such a placement(放置) is just a convention, think about it when *multithread* is invovled.
+
+CRUX: How to Virtualize memory?
+程序认为的都是虚拟内存，是一个连续的，一块一块. 所以需要某种意义上的“换算”
+OS 是怎么做到这一点的呢？How can OS build this abstraction of a *private* and *potenially large* address space for nultiple running processes on a single physical memory.
+
+** The goals of VM
+- transparency
+- Efficiency, both time and space
+- protection
+** TRANSLATION MECHANISMS
+in the virtualization of CPU, we focused on a general mechanism known as LDE. For most part let program runs on hardware but at some key point(/system call, timer interrupt/, arrange so that OS gets invovled)
+
+This is how OS get control of the hardware: /by interposing at those critical points in time/, OS maintains the control
+
+In the VM, we pursur a similar strategy, both *effciency* and *control*
+
+*Effciency* dictates the usage of hardware support(TLBs, page-table support). *control* means no application is allowed to access any memory by its own.
+
+A little more is needed by VM system, /flexibility/. Our CURX is all about making them true...
+
+
+We will use *hardware-based address translation*, or just address translation for short.
+
+An address translation is performed by the hardware to redirect application memory references to their actual locations in memory.
+
+*Basic assumption*: user's address space must be placed /contiguously/ in *physical memory*
+*Another assumption*: for simplicity, the size of the address space is not too big.
+*Finaly*, we will also assume that each address space is exactly the same size.
+
+
+For example, every process runs in the current address space should located in the 0KB - 16KB, every reference should be in this bound.
+Here comes the problem:
+How can we *relocate* this process in memory and make the ilussion of a virtual address space starting at 0?
+
+*** Solution Dynamic Relocation
+It's also called /hardware-based/ relocation.
+
+**** Base and bounds
+Need 2 hardware registers within each CPU: one is called the *base* register, the other one *bounds* (sometimes called *limit*)
+
+In this setup, each program is written and compiled as if it's loaded at address 0.
+
+Under this, we have
+#+begin_equation
+physicalAddress = virtualAddress + base
+#+end_equation
+
+These two registers are located on the real chip, which are called *memory management unit*
+**** OS Issues
+OS must also *take action* to implement Base-and-bounds
+Under our assumptions, can simply view physical memory as an array of slots, and track wether each one is free or in use
+
+1. When a process is created, it will search a *free list* to find the room for the new address space.
+
+"Variable-sized address space", things are more complicated, will be discussed later
+2. when a process is temrinated, OS puts the memory back
+
+3. when *context switch* occurs, save & restore the process data
+
+4. exception handlers, the handlers are installed in the boot time,
+   when a process tries to access memory outside the bound, the OS will raise an exception
+
+Shortcoming:
+memory waste, because the stack&heap are small sometimes, the memory between them is just wasted and this part of memory is never used.
+
+
+* Finally, let's talk about *Segmentation*
+
+Why? To avoid the memory waste
+How? Use multi-pairs od base-bounds to delcare contiguous segment, each type of them use one seg
+
+After: only used memeory is allocated space in physical memeory, thus large address spaces with large amounts of unused address space can be accommodated.
+
+
+Should give some support:
+
+1) Growth direction, negative (stack) or positive
+
+2) sharing
+   To save memory, share *certain memory segments* between address spaces. *Code Sharing* is widly used.
+   Still need some extra system help: *Protection bits*, it's about the permission
+r&e, r&w etc.
+
+** Fine-Grained vs. Coarse Grained
+Like our example, only few segments is invovled, this is an instance of *coarse-grained*. However, some system(early) were more flexibe and allowed for address spaces to consist of a large number of smaller segs. *Fine-Grained*
+
+** OS Support
+*** what should os do on a context switch
+save & resotre registers
+*** Manage free space in physical memory
+we may have scattered memory solt, when every solt is so small, it cannot hold any a little bigger process.
+
+Sol. compact memory, worst fit first fit, or buddy algo
+
+How to perform the compact process, this is not effective
+- Stop running process.
+- Copy data to somewhere.
+- Change segment register value.
+
+*** Summary
+This is still not flexibe enough to support dully generalized, sparse address space.
+
+* Paging: Introduction
+/segmentation is not enough/
+There are two ways to solve space-management problem
+
+1. Chop things up into /variable size/ pieces, as we saw with *segmentation* in vm.
+   However, when dividing a space into different-size chunks, the space itself can become *fragmented*, thus allocation becomes more challenging over time.
+
+2. Chop up space into /fixed-sized/ pieces, this is called *paging*. Correspondingly, we view physical memory as an array of fixed-sized slots called *page frames*, each of the frames can contain a single vm page
+
+** CRUX:  
+Why use paging can avoid problems of segmentation?
+What are the basic techniques? How do we make those techniques work well, with minimal space and time overheads.
+
+To record where each virtual page of the address space is placed in physical memory, the operating system usually keeps a /per-process/ data structure known as *page table*, which is for *address translation*
+
+it looks like:
+(Virtual Page 0 -> Physical Frame 3)
+(VP 1 -> PF 7)
+(VP 2 -> PF 5)
+(VP 3 -> PF 2)
+
+This is a /per-process/ data structure, if another process were to run in our example above, the OS would have to manage a different page table for it? (WHY?)
+
+To translate this virtual address the process generated, we have to first split it into two components: *VPN* and *offset* of the page
+
+The given example address space is 64 bytes, use 6bits total for it. the vpn reside at thr first several highest bits of the vd
+
+** Where are page tables stored?
+Page tables can get terribly large, much bigger than the small segment table or base/bounds pairs we've discussed previously.
+
+Image a typical 32-bit address with 4KB pages.
+
+That;s so big. cannot use hardware, we store the page table for each process in /memory/ somewhere, even been swapped to disk
+
+** What's Actually In The Page Table
+Page tabls is just a data structure that map the virtual memory address(or VPN) to the physical address(or PFN).
+
+One data structure: *linear page table*
+- This is just an array.
+
+- OS /indexes/ the array by VPN, loooks up the PTE at that index in order to find the sesired physical frame number(PFN)
+
+For the contents of each PTE, we have a number of different bits in there worth understanding at some level.
+- *valid bit* is common to indicate wheather the particular translation is valid. *For example*, all the unused space between heap and stack is marked *invalid*. If the process tries to access such memory, it will generate a trap and the OS will *terminate* the process. We save a great deal of memory.
+
+- *protection bit*, indicating whether the *page* can be read/written/executed. Again, accessing a page in a way not allowed by the bits also generate a trap to OS.
+
+- *present bit* indicates wheather this page has been *swapped out*? (still on the /physical memory/ or on the /disk/)
+
+- *dirty bit*: wheather the page has been modified since it was brought into memory
+
+- *reference bit*, aka accessed bit, used to *track* whether a page has been accessed. To determin which pages are popular and thus should be kept in memory.
+  + /My thoughts: so it means that a less popular page will be swapped out to disk?/
+  This is critical during *page replacement*
+
+** Paging: also TOO SLOW
+We know that page tables in memory can be very big. However, as it turns out, they can slow thing down too. For example, take out simple instruction:
+#+begin_src assemble
+movl 21, %eax
+#+end_src
+
+Hardware performs the translation for us. System *translate* 21 to 117, find the page table for the process, do the translate, then load the data from the physical memeory
+
+To find the location of the desired PTE, the hard ware will thus perform the following functions.
+
+#+begin_src assemble
+VPN     = (VirtualAddress & VPN_MASK) >> SHIFT
+PTEAddr = PageTableBaseRegister + (VPN * sizeof(PTE))
+#+end_src
+/this is kind of hard/
+** A Memory Trace
+
+* Paging: Faster Translation (TLBs)
+By chopping the address space into small, fixed-sized pages, paging requires a large amount of mapping information. Also, these memory indeed stores in physical memory, paging logically requires an *extra memory lookup* for each virtual address generated by the program. Going to memory for translation information before every instruction fetch or explicit load or store is prohibitively(讓人望而卻步的) slow:
+
+** CRUX:
+How to speed up address translatation
+Generally avoid the extra memeory reference that paging seems to require.
+What hardware support is required?
+What OS invovlement is needed?
+
+/When we want to make it fast, OS often needs some help <- *hardware* /
+
+** Solution
+We are going to add what is called *translatation-lookaside buffer*, TLB.
+This is a part of the *chip's MMU*
++ Now you see that mmu is a part of hardware.
+Also calle address-translatation cache
+
+Upon each virtual memory reference, the hardware first checks the TLB to see if the desired translatation is held therein.
+- if so , the translatation is performed /without/ having to consult the page table, saves a lot.
+
+** TLB Basic Algorithm
+some given code
+#+begin_src c
+VPN = (VirtualAddress & VPN_MASK) >> SHIFT
+(Success, TlbEntry) = TLB_Lookup(VPN)
+if (Success == True) // TLB Hit
+    if (CanAccess(TlbEntry.ProtectBits) == True)
+        Offset = VirtualAddress & OFFSET_MASK
+        PhysAddr = (TlbEntry.PFN << SHIFT) | Offset
+        AccessMemory(PhysAddr)
+    else RaiseException(PROTECTION_FAULT)
+else
+    PTEAddr = PTBR + (VPN * sizeof(PTE))
+    PTE = AccessMemory(PTEAddr)
+    if (PTE.Valid == False)
+        RaiseException(SEGMENTATION_FAULT)
+    else if (CanAccess(PTE.ProtectBits) == False)
+        RaiseException(PROTECTION_FAULT)
+        else
+        TLB_Insert(VPN, PTE.PFN, PTE.ProtectBits)
+        RetryInstruction()
+#+end_src
+Explaination:
+1. Extract the VPN from the virtual address.
+2. check if the TLB holds the translatation
+3. if does, then we have *TLB hit*
+4. if not, then we have *TLB miss*, follow the same rule as if TLB does not exist but insert the translation into TLB at the end.
+
+Given a case, use for loop to print out every element of an array that has 10 elements. When accessing the a[0], we have a TLB miss, but the next 3 access will be TLB hit. When meeting a[4], we have TLB miss again beacuse every page has 16 bits. All in all, our *hit rate* will be 70%, TLB improves the perfomance due to *spatial locality*.
+
+Also note role that *page size* plays in this example. If the pagesize is twice big, then the array access would suffer even fewer misses. A typical size are more like 4KB.
+
+Another thing, even the loop is end, when we access the array again, we will get a even better result. This is called *temporal locality*
+** Who handles TLB Miss?
+hardware and OS
+** TLB Contents
+A typical TLB might have 32, 64 or 128 entires and be *fully associative*. Hardware will search the entire TLB in parallel to find the desired translatation. A TLB entry is like:
+
+VPN | PFN | other bits
+TLB also has *valid bit*, *protection bits*, etc.
+
+** TLB Context Switch
+With TLBs, some new issues arise. Specificallly, the TLB only contains the valid translatations for the crrent running process.
+-> When switching from one process to another, the *hardware and OS* must be careful to ensure that the about-to-be-run process dosen't use translatations from *previous* process.
+
+*** CRUX: How to manage tlb contents on a context switch.
+When context-switching between processes, the translations in the TLB is meaningless to the about-to-run process. What should the hardware or OS do in order to solve the problem?
+
+1. *Flush* the TLB on context switches, thus empty TLB before running the next process
+   Can be accomplished with an explicit *hardware instruction* .
+   *Pros and Cons*: will never encounter the wrong translation problems. However, each time a peocess runs, it must incur *TLB misses*. If OS switches between processes frequently, the cost will be high.
+
+
+2. Some systems adda hardware suppport t enable sharing on the TLB across context switches. In particular, some hardware systems provide *address space identifier* (ASID) field in the TLB, this is like *PID* but have fewer bits.
+   /My thoughts: by giving ASID to the page in TLB, we can avoid the chaos of the mix up of the page tables of different process, also avoid the confusion/
+
+*sharing some page is useful <-the same PFN*
+
+** Issue: Replacement Policy
+*cache replacement*
+When we are installing a new entry in the TLB, we have to replace an old one, and thus the question: which one to replace
+
+*** CRUX: Design TLB Replacement Policy
+*Minimize the miss rate*
+
+A common approach is to evict(驅逐) the *least-recently-used* or *LRU* entry.
+
+** A Real TLB Entry
+** New Find in the Summary
+Hardware can help us make address translatation faster.
+TLBs do not make the word *rosy* for every program that exist. TLB access can easily become a bottleneck in the CPU pipeline.
+* Advanced Paging
+* Paging: Smaller Tables
+Tackle the second problem that paging introduces: *page tables are too big*  and consume toooooooooo much memory.
+
+/So what is the first problem?/ It's all we do for TLB, which we found that the translatation is too slow and we use the TLB on the hardware to help it out.
+
+** CRUX: Simple Array-based page tables (called linear page tabls) are too big
+How can we make page tabls smaller? Waht are the key ideas? What inefficiencies(低效能)arise as a result of these new data structutes?
+
+** A simple solution: Bigger Pages
+Some calculation:
+Given 32-bit address space, assume 16KB pages. Then we have 18-bit VPN and 14-bit off set.
+#+begin_src explaination
+A 32-bit address space is actually 2^32 byte. 16KB is actually 2^14 byte, so we have 2^32 / 2^14 = 2^18 bytes VPN, means we have 18-bit pages. 
+
+Assuming we have the same size for each PTE(4 bytes). we now have 2^18 VPN entries in our *linear page table*, the total size of per page table is 1MB
+#+end_src
+Compare to the case we use a 4KB page, 4KB means 2^12 byte, we will have 2^20, which is 20-bit VPN
+
+The major problem of this: /This is also about the *balance* problem/.
+Big pages lead to waste /within/ each page, a problem known as *internal fragmentation*
+
+So popular OS tends to use relatively large page size.
+
+
+** A Hybrid Approach: Paging and Segments
+Combine two approachs together. 
+巧克力 + 坚果 = 星球杯
+*Examples*
+we have 16KB address space with 1KB pages, if the page table looks like this:
+| VPN | PFN | valid | prot | present | dirty |
+|-----+-----+-------+------+---------+-------|
+|   0 | 10  |     1 | r-x  | 1       | 0     | // Code
+|   1 | -   |     0 | --   | -       | -     |
+|   2 | -   |     0 | --   | -       | -     |
+|   3 | -   |     0 | --   | -       | -     |
+|   4 | 23  |     1 | rw-  | 1       | 1     |
+|   5 | -   |     0 | --   | -       | -     |
+|   6 | -   |     0 | --   | -       | -     |
+|   7 | -   |     0 | --   | -       | -     |
+|   8 | -   |     0 | --   | -       | -     |
+|   9 | -   |     0 | --   | -       | -     |
+|  10 | -   |     0 | --   | -       | -     |
+|  11 | -   |     0 | --   | -       | -     |
+|  12 | -   |     0 | --   | -       | -     |
+|  13 | -   |     0 | --   | -       | -     |
+|  14 | 28  |     1 | rw-  | 1       | 1     |
+|  15 | 4   |     1 | rw-  | 1       | 1     |
+
+*In the new approach*, instead of having a single page table for the entire address space of the process. (佔用正在運行的進程的所有內存空間)
+Why not have one per logical segment? We can have three page tables, one for code, heap and stack.
+
+Then, remember with segmentation, we had a *base* register told us where each segment lived in physical memory, and a *bound* regster(sometimes called *limit*)
+
+Still have those structures in the MMU; here we use the base not to point to the segment itself *but rather* to hold the /physical address of the page table of that segment/ 
+*** Example
+Let's do a simple example to clarify.
+Assume a 32-bit virtual address space with 4KB pages, and an address space split into four segments. we use 3 for example, one for code, one for heap and one for stack
+
+To determin which segment an address refers to, we'll use the *top two* bits.
+00 for ununsed segment, 01 for code, 10 for heap and 11 for stack. thus a virtual address looks like:
+|seg|              VPN                          | Offset                    |
+| | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
+
+The hardware then stores *three base/bound* pairs.  Then each process has /three/ page tables associated with it.
+*** When there is a TLB miss,
+the hardware then takes the *physical address* then takes the physical address therein and combines it with the VPN as follows to form the address of the *page table entry(PTE)*
+
+
+SN = (VirtualAddress & SEG_MASK) >> SN_SHIFT 
+VPN = (VirtualAddress & VPN_MASK) >> VPN_SHIFT 
+AddressOfPTE = Base[SN] + (VPN * sizeof(PTE))
+*** Cons
+- If we have a large but sparsely-used heap, we can still end up with a lot of page table waste.
+- External fragmentation arises again.
+** Multi-level Page Tables
+A differnet approach, get rid of the invalid regions of the page table instead of keeping them all in memory?
+
+*Turn it like a tree*
+
+How to implement
+1) chop up the page table into page-sized units
+2) if an entire page of page-table entries is invalid, dont allocate that page of the page table at all. 
+/We use a new data structure to track whether a page of the page table is valid/, called *page directory* 
+
+- Advantage
+    + Only allocates page-table space in proportion to the amount of address space you are using.
+    + The OS can grab the next free page when it needs to allocate or grow a page table.
+- Disadvantage
+    + Multi-level table is a small example of a time-space trade-off. 
+    + Complexity.
+
+* Review the Exercise of lec10
+* Swapping - Beyond Physical Memory
+*memory hierarchy*
+** CRUX
+How OS makes use of a larger, slower device to transparently provide the ilussion of a large virtual address space.
+** SWAP Space
+The first thing we want to do is *reserve* some space on the disk ofr moving pages back and forth. In OS we call it *swap space* 
+
+Assume that the OS can read from and write to the swap place, in page-sized unit. OS also need to remember the disk address of a given page.
+** The Present Bit
+If we wish to allow pages to be swapped to disk, we must add even more machinery. -> When the hardware looks in the *PTE*, it may find that hte page is /not present/ in physical memory, *accroading to the present bit*
+
+If the *present bit* is 0, it means that it's accessing a page that is not in the physical memory. We call it a *page fault*
+** Page Fault
+When we have fault, we have handler. Similarly, we have *page-fault handler*.
+How will the OS know where to find the desired page, which resides in disk?
+
+*It's OS that handle Page Fault*
+
+** What if memory is full?
+memory is not always big enough for the swap in.
+
+It's natural to *page out* one or more pages to let the new pages in. This is called page-replacement policy.
+
+** Page Fault Control Flow
+*** Hardware Control Flow
+THREE important cases to understand when a *TLB miss* occurs.
+1) Page was both *present* and *valid*
+   then when there is a TLB miss, the handler can simply grab the PFN from the PTE. 
+2) the page fault handler must be run, this was a legitimate page for the process to access but not on the disk.
+3) *invalid* page, the hardware just trap this invalid access, terminating the program.
+*** Software Control Flow
+First, the OS must find a physical frame for the soon-to-be-faulted-in page to reside within. If there is no such page, we'll have to wait for the replacement algorithm to run and kick some pages out of memory, thus freeing them for use here.
+
+With the physical frame in hand, the handler then *issues* the I/O request to read in the page from swap space.
+
+Finally, when that slow operation completes, the OS updates the page table and retires the instruction. 
+
+
+** When Replacements Really Occur
+Our previous assumption: replacement occurs *until* the memory is enitrely full.  
+*This is unrealistic*
+
+We must keep a small portion of memory free more *proactivaly*
+
+To make it, most OS have some kind of *high watermark* HW and *low watermark*, LW, to help decide when to start evicting pages from memory. 
+
+If there are fewer than LW pages available, then a *background thread* that is responsible for freeing memory runs. 
+
+It *keeps doing that* when there are HW available pages.
+
+The background thread is called *swap daemon* or *page daemon*
+
+
+** Summary
+These actions all take place *transparently* to the process. And it is fast.
+* Swapping - Policies
+Which page to evict?
+** CRUX: How the OS decide which page to evict from memory? 
+
+** Cache Management
+Given that main memory holds some subset of all hte pages in the system, it can be viewed as *cache* for virtual memory pages in the system. 
+
+So, our goal is actually *minimize the number of cache misses*, minimize the number of times we fetch a page from disk.
+We can also call it *maximize the number of cache hits*
+
+*average memory access time* AMAT
+
+#+begin_src
+AMAT = (P_Hit * T_M) + (P_Miss * T_D)
+#+end_src
+
+T_M is the cost of accessing memory and T_D is accessing disk. 
+
+** THE Optimal Replacement Policy
+
