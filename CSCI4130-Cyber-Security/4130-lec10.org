@@ -1,0 +1,110 @@
+#+title: Session
+* Web Authentication
+- IP address
+  + The IP source address can be spoofed(謊騙，愚弄)
+  + NAT-ing may cause several users to share the same IP address (會造成誤傷)
+  + The same user could use different IP addresses.
+
+- HTTP
+  + Not very scalable and difficult to manage at the application level
+
+- Certificate
+  + Works(on the server side ) for TLS-based connection
+  + Few users have "real" certificates or know how to use them
+- Form
+  + Form Data might be sent in plaintext(*NOT SECURE*)
+
+* HTTP Authentication
+- A protocol based on simple challege-response scheme
+- The challege is returned by the server as part of the *401* reply message.
+- *A authentication request refers to a REALM is sent by the client*
+  + *REALM* specifies a group of resources on the server
+- The client must include an *Authentication header field* with valid credentials.
+
+* HTTP Authentication
+From the web server's perspective, HTTP authentication enables basic *access control*.
+** 401 Unantuorized
+HTTP/1.1 401 Unantuorized
+...
+Content-Type: text/html
+WWW-AuthenticateL Basic realm="xxx"
+...
+
+** HTTP is Stateless
+the http server is not required to retain(保留) information or status about each user for the duration of multiple request.
+
+A *web application* can track state over multiple requests by
+- http cookies
+- server side sessions
+- Embedding information in the returned page
+  - Hidden variables within web forms
+  - Modified URLs
+
+** User Sessions
+A session is a sequence of HTTP request and response transactoins associated to a user
+
+This is a concept beyond the HTTP, thus needs to be implemented at the application level
+
+** Basic Authentication
+- A form is used to send the credentials(over a TLS-protected channel) to a server-side application
+- The application:
+  Verify credentials
+  creates ands sends back a session authenticator(*often a cookie*)
+- Authentication is performed by checking this *value*
+
+** HTTP Cookie
+- it's a small piece of data sent from/set by a *website*
+- Often stored on the user's computer by web browser
+- Automatically sent with a HTTP request by the browser
+- Designed as a reliable mechanism to help web applications keep states at the client side
+- Are only accessible by the website that sets them
+** Cookie Attributes
+a cookie sample
+#+begin_src cookie
+HTTP/1.0 200 OK
+Set-Cookie: LSID=DQAAAK...Eaem_vYg; Path=/accounts; Expires=Wed, 13 Jan 2021
+22:23:01 GMT; Secure; HttpOnly
+Set-Cookie: HSID=AYQEVn...DKrdst; Domain=.foo.com; Path=/; Expires=Wed, 13 Jan 2021
+22:23:01 GMT; HttpOnly
+Set-Cookie: SSID=Ap4P...GTEq; Domain=.foo.com; Path=/; Expires=Wed, 13 Jan 2021
+22:23:01 GMT; Secure; HttpOnly
+Set-Cookie: made_write_conn=1295214458; Path=/; Domain=.foo.com
+Set-Cookie: reg_fb_gate=deleted; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Path=/;
+Domain=.foo.com; HttpOnly
+#+end_src
+
+*** Domain & Path define the scope of the cookie
+if *domain* is not specified, it's set as a host-only cookie(IE for exception)
+if *path* is specified, the cookie is only used when requesting pages contained in the correspinding path
+if *path* is *NOT* specified, the path of the requested resource is used
+* Client-side Access to Cookie
+- Reading a cookie
+  ~var cookies = document.cookie~
+  /only cookies in scope are returned/
+- Setting a new cookie
+  ~document.cookie = "name=value; expires=..."~
+  /It does not overwrite all existing cookies/
+- Delete a cookie
+  ~document.cookie = "name=value; expires=PAST TIME;"~
+  
+* CSRF
+In CSRF attacks, a malicious server or JavaScript code tricks the user into performing actoins on another web application
+- Posting a new message
+- Deleting a record
+- Initiating a transfer
+
+Trick the user into her/his web page at the right time.
+#+begin_src html
+ <!DOCTYPE html>
+ <html> <head>
+ <title>Page Title</title>
+ </head>
+ <body>
+ <h1>Welcome</h1>
+ <p>Welcome to Evil's page!</p>
+ <img src="welcome.jpg">
+ <img src="http://www.bank.com/transfer.php?
+ amount=1000&recipient=evil"> 
+<!-- This is the point! -->
+  </body> </html>
+#+end_src

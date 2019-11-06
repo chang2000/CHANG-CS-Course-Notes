@@ -1,0 +1,107 @@
+#+TITLE: Control Hijacking: Attacks
+
+* The context of this part
+  The application sofware performs a group of *pre-defined* functions ot tasks.
+  \newline
+  *The behavior of programs si determined by*
+- data/input being processed
+- the code being executed
+- the environment in which it runs
+
+* Attackers' Goals
+*Compromising the security properties of program*
+- confidentiality
+- integrity(work as intended)
+- availability(can be used normally)
+
+*How?* (What we will discussed today)
+- take over the control of the program
+- inject new code or new command
+- cause it to crash
+
+* CFG
+For a CFG, not all paths are feasible./(May have unreachable conditions)/.
+
+* Control Flow Hijacking Attacks
+** How?
+- the application code is loaded in *memory*
+** Corrupting the memory
+- Buffer overflow
+
+* Stack
+- /Growth towards to lower address/.
+- The stack pointer *ESP* points to the top of the stack.
+
+* Overflow
+- The lack of boundary cheking
+- most popular class of attacks
+- Architecture/OS depenent
+- both locally and remotely
+- modify data and control flow
+
+*A example of boarding*
+use overflow to change some infomation like class of seat...
+
+\section*Extra:The function pointer in C
+#+BEGIN_SRC c
+void (*fp)()
+#+END_SRC
+
+* Stack Overflow
+- A function's local variable are statically allocated ion the stack.
+- Normally it causes a segmaentation fault
+- /If correctly cratted, it is possible to/
+- Three Stack Overflow Attacks
+The key is to understand the stack layout
+
+* Vulnerable Function
+
+* Overflow Opportunities
+- What can be overwritten?
+
+-- Data & Data Pointer
+
+-- Return Address
+
+-- Stack Frame Pointer
+
+-- Exception handler (running on M$ Machine)
+
+-- Jump destination
+
+- What causes overwritten
+
+-- Copying overflows
+
+-- array indexing overflow
+
+-- integer overflows
+
+#+BEGIN_SRC c
+int *a = malloc(...);
+#+END_SRC
+
+-- loop overflows
+
+- Where is overwritten
+
+-- Stack
+
+-- Heap
+
+* Safe Functions
+
+We should use safe version of memeory access function  to make sure important data structures cannot be overwritten.
+
+(Refer to the slides, there are 3 code snippts)
+- Many /safe/ libc functions are misleading
+-- ~strcpy()~ may leave string unterminated. /Cause segfault if not well treated/.
+
+* Play with the functions provided in the slides.
+  
+* More on ~printf()~
+without parameter, you can even *review* the content /previously/ stored in the memory.
+
+#+BEGIN_equation
+Pr(E \mid K) <= 1 + e, \exist e < 1 / 128
+#+END_equation

@@ -1,0 +1,99 @@
+* The first class of Cyber Security
+
+** How to *think adversaraially* about computer systems
+** *Understand and assess* the security implications of computer and network systems
+** *Attack* work in practice
+** Defend against common attacks 
+
+* Topics
+** Security Principles
+** Control Hijacking Attacks and Defenses
+   -Buffer overflow
+** OS Security
+** Cryptography
+** Network Security
+
+* What's involved
+  > Absord material presented in lectures and tutorials
+
+---
+* The cyber Landscape
+  ...
+  -cyber-physical systems: car
+  -power grid
+  ...
+* Why care about security
+** It impacts everyone's daily life
+   -banking, investment, school records, scoial media...
+* Security is important for
+    -confidentially of communication
+    -data privacy
+    -funcionality
+    -physical safety
+    -...
+    -It may cause very very serious consequences
+* Is not only important
+** Security is also *fun*
+  -Can you break a well-protected system
+  -Can you stop the attacks
+** Security in Art and in Science
+   -A good mix of analytical skills
+   -Dealing with very practical problems with real-world impacts
+   -Considering a lot of trade-offs
+
+* Is also challenging
+  -WHAT IS HACKABLE:
+  Everything, especially those connected to the Internet
+
+  -Adversaries are *intelligent and powerful*
+  They can induce nearly impossible faults
+
+  -Difficult to reason about a system's security
+  -Humans are very easy to exploit
+  -*Asymmetires* between attacks and defenses.. **This content should be reviewed**
+  -Security comes with *costs*
+  -Negative property
+  -Attackers can make profit from exlpiting 
+
+* What is Cyber/Computer Security
+
+* Threat Model
+** Threat: A potential violation of security
+** Cannot protect against all possible attackers
+   -Why?
+** High level goal is *risk management*
+** Definition
+** A threat model includes:
+    -What to protect
+    -From whom to protect
+    -Assumptions
+    -A list of the relevant..
+* Attacker
+** No attackers, no problems.
+** Who are the attackers?
+   ...Many kind of attackers
+** Why do people attack systems?
+   -Fun
+   -Money
+   -Politics
+   -To destroy the world
+** The reasons of attacks
+   -make the attack non-profitable
+* Users
+** Humans are the most *vulnerable* part in defense
+** Humans are stupid.. need to be reviewed
+
+* Policies and Mechanisms
+** Security Policy
+   what is and is not allowed
+** Machanism
+* Prevention, Detection and Response
+  Prevention aims to prevent sometihing abd happen
+  Dectecgtion is baout knwoing that somehting is wrong
+- False positives: wronmg alarms: 
+- False Negatives: unnoticed attacks
+
+Response is that we need to do when we have detection
+* 
+You cannot control the *inbound traffic* to you, DDOS cannot be prevent.
+

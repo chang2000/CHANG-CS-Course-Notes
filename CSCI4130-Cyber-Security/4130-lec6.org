@@ -1,0 +1,76 @@
+#+title: Asymmetric Key Cryptography
+#+LATEX_CLASS: article
+#+LATEX_HEADER: \usepackage[a4paper]{geometry}
+#+LATEX_HEADER: \usepackage{hyperref}
+#+LATEX_HEADER: \geometry{verbose,tmargin=1in,bmargin=1in,lmargin=.6in,rmargin=.6in}
+#+LATEX_HEADER: \usepackage{fancyhdr}
+#+LATEX_HEADER: \setlength{\headheight}{15.0pt}
+#+LATEX_HEADER: \pagestyle{fancy}
+\newpage
+
+* Basic Concepts
++ Each party has a pait of keys {PK, SK}
++ The public key are known to everyone.
++ the process:
+  - Alice encrypts the message with Bob's public key
+  - Bob decrypts the message with his own *secret key*
+** Live Sample
+
+/insert pic here/
+
+* Buliding of Asy-Enc
+** Four essentials
++ Key Generation Algorithm
++ trapdoor permuatations
++ Encryption Algorithm
+  - use *PK* to encrypt
+  - Difficult to inverse
++ Decryption Algorithm
+  - $F^{-1}(SK, C) = M$, use the inverse algo of *F*
+* One-way function
+   - Easy to compute and hard to inverse
+   - For polynomial time attacker
+   - Example of one-way function
+* Euler's Totient Function
+Prime number is an important for the design of keygen algo
+- *Totient* of n: number of positive integers that are relatively prime to n.
+** Some Lemma:
+- $\phi(p) = p - 1$
+- $\phi(pq) = \phi(p)\phi(q)$
+  + the function is multiplicative
+
+** Euler's theorem
+- If a and n co-prime, then $a^{\phi(n)} = 1 mod n$
+* Finding Big Primes Quickly
+1) Generate a large random number /p/
+2) Generate a random integer a: /1 < a < p - 1/
+3) Test a^{p-1} mod p = 1
+   - If not, go to 1 and find another p
+   - Otherwise, go to 2, generate another a, until we have made enough iterations
+* RSA Key Generation
+- Find large primes p, q
+- Compute p * q
+- Compute $f(n) = (p - 1)(q - 1)$
+- f(n) is difficult to compute even knowing n.
+- choose an $e$ that co-prime with f(n)
+- ... (/refer to slides for detials/)
+
+- $PK: \{n, e\}$
+- $SK: \{d\}$
+
+
+** RSA Encryption
+
+* Diffie-Hellman Key Exchange
+- Alice and Bob agree to use a *prime* p, and a *base* g
+* Digitial Signatures
+- Goal: binding a document to the author.
+   + But attacker can also copy signature from one document to another document
+
+- Solution:
+
+#+begin_equation
+S = sign(M, SK) = F^(-1) (H(M), SK)
+#+end_equation
+
+To verify a mac, usr the key

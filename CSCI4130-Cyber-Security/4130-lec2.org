@@ -1,0 +1,83 @@
+#+TITLE: Security Principles 
+#+AUTHOR: WANG Tianchang @CUHK 
+#+OPTIONS: ':nil *:t -:t ::t <:t H:3 \n:nil ^:t arch:headline
+#+OPTIONS: author:t c:nil creator:comment d:(not "LOGBOOK") date:t
+#+OPTIONS: e:t email:nil f:t inline:t num:t p:nil pri:nil stat:t
+#+OPTIONS: tags:t tasks:t tex:t timestamp:t toc:nil todo:t |:t
+#+CREATOR: Alex WANG 
+#+DESCRIPTION:
+#+EXCLUDE_TAGS: noexport
+#+KEYWORDS: me
+#+LANGUAGE: en
+#+SELECT_TAGS: export
+#+LATEX_CLASS: article
+* Security Principles
+Set of principles to design more secure software and systems
+
+*However, there are not guarantee*
+* Know your threat model
+In a regular document case: 
+Model your threat before and after your deployment
+* Economy of Security Mechanism
+** Attacker
+** Defender
+
+兩者在不斷競爭
+
+Example: TL-15 safe take 15 mins to break cost $1000
+
+TL-30 safe take 30 mins to break cost $2000
+* Open design
+  All people can examining the mechisms - *assume attackers have the knowledge of the safe's design*
+
+  DONT rely on security through obscurity
+* Fail-safe Defaults
+  without explicit permission, the default action is *deny* of access.
+* Least Privilege
+  For some old website, you have to do backwards compatica
+  In a lot design is not fail-safe
+** What a BitTorrent client do?
+  - Send your private files to someone else? Yes
+  - Delete all files? Yes
+  - Install new executable? Yes
+** What should a BitTorrent client do?
+   ...
+should have the minimal privileges needed got its intended purpose.
+
+It also assumes compartmentalization and isolation
+
+* Monolithic Design
+* Complete Mediation
+  Review notes
+  Need to construct a reference monitor
+  All accesses must go through the check of the reference monitor
+  Example: security check in airport
+  Desired propertiess
+  -un-bypassable
+  -Tanper-proof (篡改)
+  
+
+
+
+* Separation of Privilege
+  To lanuch a missile, it usually needs multi person permission, one key is not enough
+
+* Defense In Depth
+Review
+When you use more than one security mechanism, what properties do you require them to have:
+- Be as different as possi
+Other examples:
+** 2-factor authentication
+   -Something you know
+   -Something you have
+   -Something you are
+
+* Human Factor
+  the green text is good
+  human are stupid
+  someone just write down the passwords on the stickies
+
+How to security store a policy-compliant password
+
+* Dealing with users
+* Only as Secure as the Weakest Link

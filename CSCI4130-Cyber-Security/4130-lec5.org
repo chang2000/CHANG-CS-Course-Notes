@@ -1,0 +1,133 @@
+#+TITLE: Symmetric Key Cryptography
+#+LaTeX_CLASS_OPTIONS: [a4paper,12pt]
+This is a simple form
+* Cryptography
+- A tremendous tool enabling secure communication over insecure communication channels -- /this is a narrow definition/
+- The *basis* for many security mechanisms online browsing
+- *Not* for all security problems, counterexample: /contorl hijacking/
+* Three main goals
+- Confidentiality
+- Integrity: /prevent altering the data/
+- Authenticity: requires/implise integrity
+* Special guest
+- Alice
+- Bob
+- Eve: the attacker
+- sometimes Charlie
+
+*More explaination*
+
+- Confidentiality: Preventing Eve from learning the message
+
+- Integrity: Preventing Eve from modifying the message
+
+- Authenticity: Ensuring the message is from Alice
+
+* Some terminlogies refered to slides
+- Encryption
+  Converting *plaintext* to *ciphertext*
+- Decrypyion
+  Converting *ciphertext* to *plaintext*
+- Key
+  A *randomly* chosen value used in encryption and decrypyion
+- Cryptoanalysis
+  Breaking the encryption/decryption scheme by analyzing the algorithm/implementation
+
+* Crypto Algorithms
+- Symmetirc: both key is the same
+
+- Asymmetirc: two different keys, even more keys \newline
+
+- One-way function: *very difficult to inverse the computation* (use
+  permutation sometimes)
+
+- One-way hash function: Generate fixed-length output given any input. /signature or verfication code sometimes./
+
+* A live Example
+*Then is the annoation with crypto algo involved.* /Refer to the
+slides./
+#+CAPTION: Demo
+#+NAME:   fig:1
+[[./symcry-demo.png]]
+
+** Basic Concepts and Representation
+   - M_i stands for the *plaintext*, which is also the *message*.
+   - C_i stands for the *ciphertext*
+   - K is the key for the communication
+   - E & C is the encrypt and decrypt algorithms we use
+#+begin_equation
+    Enc(M, K), Dec(C, K)
+#+end_equation
+
+** Attakcer Side
+   + *Goal*: any knowledge about M_i in addition to its length or
+     about K
+     - Slightly better than 50% probability at guessing a single bit.
+     - Any information about the relationship between M_i and M_j
+
+   + *Assumption*: K is *randomly selected and secret*
+
+   + Recognition of success: Eve can generally tell if he has
+     correctly and fully recovered M_i
+
+* A Security Game
+
+#+CAPTION: A Security Game
+#+NAME:   fig:2
+[[./se-game.png]]
+
+*Attacker guesses which box is E_k*
+
+Actually, this is the recognition between *Random Message* and
+*Meaningful Message*
+
+* Evaluating Security
+
+/Actually we don't want the same text get the same ciphertext/.
+
+*A better encrypt algo(rotating algo): will be tested in the midterm*
+
+For any polynomial-time attacker, the probability to win this security game is not signiﬁcantly greater than 50%
+
+begin{equation}
+Pr[A wins] <= 1/2 + e, (e.g., e = 1/2^{128})
+\end{equation}
+
+If 60% for attacker to lose(/high prob to lose/), is it a good scheme?
+
+/Ans: NO. If attacker can always lose/
+#+begin_equation
+Pr[A wins] <= 1/2 + e, (e.g., e = 1/2^{128})
+#+end_equation
+Should use the explicit definition on slides.
+
+* IND-CPA
+
+*A formal definition:*
++ For any polynomial-time attacker, the prob to win IND-CPA security
+  game is not significantly greater than 50%.
+
++
+#+begin_equation
+Pr[A wins] <= 1/2 + e, (e.g., e = 1/2^{128})
+#+end_equation
+
+This is a very strong security guaratee.
+
+For the same plaintext, it generate diffirent ciphertext each time, *randomly*.
+
+* One-Time Pad
+* Two-Time Pad
+* Block Ciphers
+* Message Authentication Code (/MAC/)
++ Idea: Compute and verify a tag of the message that only Alice and
+  Bob can produce
+** With MAC involved
+   + Alice
+** Hash-MAC
+- Most widely used and more secure.
+- The only secret is the key
+** Usage
+   Use MAC with encryption together.
+
+* Pros & Cons of Sym-Cry

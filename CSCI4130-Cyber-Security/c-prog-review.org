@@ -1,0 +1,39 @@
+* C Programming Review
+- A structured programming language.
+- Few reserved keywords.
+- User-defined and compound types.
+- Low-level access to computer memory.
+- Map efficiently to machine instructions.
+- Preprocessor => a separate first step in compilation.
+* 
+#+BEGIN_SRC c
+int main(int argc, char *argv[])
+#+END_SRC
+this is for the argument from the command line
+
+* The comment style in C language
+* The reserved keyword - 32 totally
+* Data Types
+** Basic data types
+- char
+- int
+- float
+- double 
+In addition. there are a number of qualifiers that can be applied to basic types like
+- long
+- unsigned
+- short
+** Derived
+*array*, struct, union, enum, *pointer*
+
+* Naming conventions
+  alphanumeric and underscore
+* Operations
+* Control Flow
+
+
+* Pointer
+- Pointer is a type of reference that records the address or location of an object or function in memory. A pointer value is typically a raw memory address.
+- Pointer can be dereferenced to access data stored at the address pointed to, or to invoke a pointed-to functions.
+- A null pointer value points to invalid location. Dereferencing a null pointer value is undefined, often resulting in a segmentation fault.
+- Void pointer (void *) points to object of unspecified type, and can therefore be used as "generic" data pointer. Void pointer can’t be dereferenced, they can easily be converted to and from any other object pointer type.

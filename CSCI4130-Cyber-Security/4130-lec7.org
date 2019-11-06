@@ -1,0 +1,102 @@
+#+title: OS Security
+#+LATEX_CLASS: article
+#+LATEX_HEADER: \usepackage[a4paper]{geometry}
+#+LATEX_HEADER: \usepackage{hyperref}
+#+LATEX_HEADER: \geometry{verbose,tmargin=1in,bmargin=1in,lmargin=.6in,rmargin=.6in}
+#+LATEX_HEADER: \usepackage{fancyhdr}
+#+LATEX_HEADER: \setlength{\headheight}{15.0pt}
+#+LATEX_HEADER: \pagestyle{fancy}
+\newpage
+
+* System Security
+- Three properties of security
+- Some resources (files) are senstive
+* How do we protect them from an attacker
+
+* Access Control (Core Machnesim)
+Selective restriction of access to resources according to a policy.
+- Fundementals
+  + Subject(Principal): the entity who is accessing the resource
+    * a user or a process
+  + Object: a resource that can be accessed
+  + Policy: how subjects can access on object
+- Authorization
+- Authentication
+- Audit: log all activities attributed to a particular principal
+- Accountability: hold a principal accountable for actions he/she takes
+
+* Access Control Policy
+
+access(S, O) = true / false
+
+* Access Control Matrix
+This is a data structure to manage the relationship efficiently
+
+* Permissions
++ Finer-grained permissions on accesses to an object:
+    - Read
+    - Write
+    - Execute
+
+> A advanced access control matrix
+
+
+* Security Mechanisms
+Two primary security mechanisms for enforcing access control policies:
+- Access Control List
+- Capability-based Security
+  + Each subject had an unforgeable token that grants access
+* ACL
+Crux: when a new user is created, update all?
+NO
+Use the guest list / default thing for better efficiently
+* CBS
+use the key to differentiate the users
+Anyone holds the token should be granted access
+(Just like tickets in a show)
+* Reference Monitor
+To mediate all accesses to objects
+- Un-bypassable
+- Tamper-proff
+- Verigiable
+
+* TCB, this is the definite correct
+
+* DAC vs. MAC
+
+* Role Based Access Control
+将用户分成不同的role，同类role的访问权限相同
+ This is used to simplify the a.c. matrix
+* Attribute Based Access Control
+- Assign attributes to subjects to subj or objs
+
+*Role Based Access Control* is one of the example of ATBA
+
+
+* UNIX Security Model
+- refer to slides, this part is kinda inside my comfort zone.
+* UNIX Groups
+> Performed like *role based access control*
+
+* Stickty Bit
+Can a user rename a file in a directory is the user has only write permission on the directory but not the file
+** Stickty Bit
+- Off, if permission to dic is owned, then can rename & delete fils.
+- On   Only file owners, directory owner or root can rename & delete files.
+
+* Unix Process ID
+** Real ID
+** Effective ID
+** Saved ID
+* Linux Capability
+EUID = 0 is privileged processes, other are not
+Capabilities can divide the power of superuser into pieces
+* Privilege
+Separating privilege operations into a small separate TCB can
+* Sandbox
+Isolate the process from the rest of the enviroment
+* Android Process
+- least privilege
+* Chrome
+Multi peoicess architedture
+so we have process that has differnet privilege

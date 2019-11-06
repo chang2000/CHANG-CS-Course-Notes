@@ -1,0 +1,36 @@
+#+title: SOP
+
+* SOP same origin policy
+- Frame Isolation
+** Need:
++ Each website is ioslated from all other websites
++ Web pages of the same website are not isolated
+** Frame-Frame relationshipss
+- canScript(A,B)
+  Can Frame A execute a script that access any DOM element of Frame B?
+- canNavigate(A,B)
+  Can Frame A *change the origin* of content of Frame B?
+** *Frame-Principal* relationships
+readCookie(F,D), writeCookie(F,D)
+can Frame F read/write cookies of domain D?
+
+** Same-origin Policy
+- This is an essential security mechanism that isolates different pages
+- *A frame in one origin shall not be allowed to access resources of frames in a different origin*
+/questions here: what is *resources*? what is "origin"?/
+** Origin
+ this is the granularity(粒度) of protection of SOP
+ - A tuple of protocol, hostname and port
+ - Determined by string matching
+ - An ~<iframe>~'s origin is by the URL where it is loaded, not the URL of its parent frame
+ - JavaScript code executes under the *origin of the embedding frame*
+   > This opens the door for many other security problems on the Web
+** SOP: XMLHttpRequests (XHR)
+- This allows JS to send HTTP request to server and receive the data in the response
+- SOP prohibits XHRs from being sent to a different origin
+- JS can read only responses from the same origin
+** http responses
+a frame can load images css font from another origin but cannot inspect it
+a frame can also load JS code from another origin
+** Relaxing SOP
+there are still some situations that we can relax the SOP for *xxx*

@@ -1,0 +1,156 @@
+#+title: Vulnerable Program and Attack
+#+LATEX_CLASS: article
+#+LATEX_HEADER: \usepackage[a4paper]{geometry}
+#+LATEX_HEADER: \usepackage{hyperref}
+#+LATEX_HEADER: \geometry{verbose,tmargin=1in,bmargin=1in,lmargin=.6in,rmargin=.6in}
+#+LATEX_HEADER: \usepackage{fancyhdr}
+#+LATEX_HEADER: \setlength{\headheight}{15.0pt}
+#+LATEX_HEADER: \pagestyle{fancy}
+\newpage
+
+* Sample Vulnerable Program
+  
+#+begin_src c
+#include <stdio.h>
+
+void secretFunction()
+{
+    printf("Congratulations!\n");
+    printf("You have entered in the secret function!\n");
+}
+
+void echo()
+{
+    char buffer[20];
+
+    printf("Enter some text:\n");
+    scanf("%s", buffer);
+    printf("You entered: %s\n", buffer);    
+}
+
+int main()
+{
+    echo();
+
+    return 0;
+}
+#+end_src
+
+The code above seems very safe to *normal people*, beacuse there is *NO WAY* to invoke the function ~secretFunction~ thus get the secret.
+
+Howerver, we can call the function by modifying the *input*. Below are more detailed description.
+
+* C Program Memory Layout
+
+** Some Common Registers
+
+- ~%eip~
+*The instruction pointer register* /Program counter/.
+It stores the address of the *next instruction* to be executed.
+After every instruction execution it's value is *incremented* depending upon the *size of an instruction*.
+
+- ~%esp~
+*The stack pointer register*. It stores the address of *the top of the stack*. This is the address of the *last element* on
+the stack.
+~%esp~ points to the value in stack that at the lowest memory
+address. /Think about why? It's about the increment of the memory./
+
+- ~%ebp~
+*The base pointer register* ( or *frame pointer* ).
+It is usually set to ~%esp~ (top of the stack) at the start of the
+function. This is done to keep tab of function parameters and local
+ variables. Local variables are accessed by subtracting offsets
+from ~%ebp~ and function parameters are accessed by adding offsets 
+to it as you shall see in the next section.
+/Points to the current frame./
+
+
+
+/Some other pointers apperaed in lecture notes:/
+
+~sfp~ (/saved frame pointer/) and ~ofp~ (/old frame pointer/)
+
+* Memory Management during function calls
+
+Consider the following piece of code:
+
+#+begin_src c
+void func(int a, int b)
+{
+    int c;
+    int d;
+    // some code
+}
+void main()
+{
+    func(1, 2);
+    // next instruction
+}
+#+end_src
+
+At first, our ~%eip~ is pointing to the ~func~ call in main. The 
+following steps would be taken:
+
+1. function call is found, *push parameters on the stack from left to
+   right*. So ~2~ will be pushed first and then ~1~ // *NOTED*
+
+2. We need to know where to return (/return address/) after ~func~ is   completed, so push the address of the next instruction on  the stack.
+
+3. Find the address of ~func~ and set ~%eip~ to that value. *The control has been transferred to ~func()~*.
+
+4. We are in a new frame(function) now, so update ~%ebp~. *Before
+   updating it*, we need to save the original value of ~%ebp~, which
+   points to the main frame, in order to come back when ~func~ is
+   end. So ~%ebp~ is pushed on the stack.
+
+5. Set ~%ebp~ to be ~%esp~. ~%ebp~ now points to current stack pointer.
+
+6. Push local variables onto the stack/reserver space fot them on  stack. ~%esp~ will be changed in this step.
+
+7. After ~func~ gets over we need to reset the previous stack
+   frame. So set ~%esp~ to ~%ebp~ ( $ %esp = %ebp $ ). Then pop the
+   eariler ~%ebp~ from the stack, store it back in ~%ebp~. *This is
+   the step  that make the base pointer points back to ~main~*
+
+8. Pop the return address from stack and set ~%eip~ to it. The *control flow* is back.
+
+* Buffer Overflow Vulnerability 
+
+*Basically means:* to access any buffer outside of it's allocated
+memory space. 
+
+
+Recall the code above, let's complie it using
+
+#+begin_src bash
+gcc vuln.c -o vuln -fno-stack-protector -m32
+#+end_src
+
+Then use ~objdump vuln~ to disassemble the code. The full output
+is \href{https://pastebin.com/PXhpXsax}{*HERE*}.
+
+- Get the address of the ~secretFunc~
+
+- Get how many bytes that ~echo~ allocate for variable ~buffer~, is 28.
+
+- They are aside a %eip, which is 4 bytes.
+
+
+Thus, we can modify the input as this form: 32 bytes char + reverse
+address of the ~secretFunc~.
+
+#+begin_src bash
+python2 -c 'print "A" * 32 + "\xd4\x83\x04\x08"' | ./vuln
+#+end_src
+
+*We get the program exploit!*
+
+*Tips*
+
+- Think about why it's 32 in our input?
+
+- Test under 32-bits Metapolitable
+
+- Disable memory randomlization for system
+
+*Shell Code Injection* /coming soooooooooooooon......./

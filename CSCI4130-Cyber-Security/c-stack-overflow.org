@@ -1,0 +1,90 @@
+#+title: C Stack Overflow
+#+LATEX_CLASS: article
+#+LATEX_HEADER: \usepackage[a4paper]{geometry}
+#+LATEX_HEADER: \usepackage{hyperref}
+#+latex_header: \hypersetup{colorlinks=true, linkcolor=blue, filecolor=magenta, urlcolor=cyan,}
+#+LATEX_HEADER: \geometry{verbose,tmargin=1in,bmargin=1in,lmargin=.6in,rmargin=.6in}
+#+LATEX_HEADER: \usepackage{fancyhdr}
+#+LATEX_HEADER: \setlength{\headheight}{15.0pt}
+#+LATEX_HEADER: \pagestyle{fancy}
+\newpage
+
+
+* Introduction
+
+This notes is adapted with the teaching content of CSC4130 in CUHK. In
+this notes, I will try to do a detailed analysis on the stack layout
+of C langauge and how to perform hijacking attack on them. 
+
+** Slides to Analyze
+- \href{http://course.cse.cuhk.edu.hk/~csci4130/slides/overflow-normal.pdf}{Overflow-Normal}
+- \href{http://course.cse.cuhk.edu.hk/~csci4130/slides/overflow-crash.pdf}{Overflow-Crash}
+- \href{http://course.cse.cuhk.edu.hk/~csci4130/slides/overflow-inject.pdf}{Overflow-Inject}
+- \href{http://course.cse.cuhk.edu.hk/~csci4130/slides/overflow-divert.pdf}{Overflow-Divert}
+
+** Basic Knowledge of Stack Pointer
+   You can refer to
+   \href{https://chang2000.github.io/blog/2019/09/29/Exploit/}{this note} 
+which has a better introcution to stack pointers.
+
+*Here is a short introduction*
+
+- %eip
+  next instruction pointer
+
+- %ebp
+  base pointer, or frame pointer, point to the current frame.
+  
+- %esp
+  stack pointer, point to the top of the *stack*
+
+** Sample Code
+
+#+begin_src c
+  #include <ctype.h> // tolower
+  #include <string.h> // strcmp
+  #include <stdio.h> // fgets, fputs
+
+  void reveal_secret() {
+    fputs("SUPER SECRET = 42\n", stdout);
+  }
+
+  int verify(const char* name) {
+    char user[256];
+    int i;
+    for (i = 0; name[i] != '\0'; ++i)
+      user[i] = tolower(name[i]); user[i] = '\0';
+    return strcmp(user, "imwtc") == 0;
+  }
+
+  int main() {
+    char login[512];
+    fgets(login, 512, stdin);
+    if (! verify(login))
+      return 1;
+    reveal_secret();
+    return 0;
+  }
+#+end_src
+
+*Note that the smaller address is higher*
+
+
+* Analysis of Normal Case (Run the code normally)
+Generally OK for me, more info refer to OH1-qs.md.
+
+* Analysis of Crash
+
+Start from the function ~fgets~. 
+
+
+We see that in the function ~verify~, the space allocated for user is
+256, while the ~fgets~ allow user to enter ~512 bytes~, so when
+performing the ~toLower~ one by one and save to ~user~ will cause a
+*Stack Smashing* .
+
+* Analysis of Inject
+Similar to this \href{}{note}
+
+* Analysis of Divert 
+Similar to this \href{https://chang2000.github.io/blog/2019/09/29/Exploit/}{note} 
