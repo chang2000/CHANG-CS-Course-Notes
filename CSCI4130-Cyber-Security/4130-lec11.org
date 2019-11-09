@@ -1,0 +1,106 @@
+* Web Security - Injection
+
+* Command Injection Attacks
+- User input is executed as part of a command on the server, because of /incorrect sanitization ot lack of sanitization/
+- A developer might use /unsanitized user input/ to compose a string that is evaluated as code or as the filename of code.
+- *Attacker provided an input that includes COMMANDS*
+
+- Some functions for code execution:
+  + system()
+  + eval()
+  + popen()
+  + include()
+  + require()
+  + ...
+
+** Example:
+The server application is a calculator, which uses ~eval()~ to compute the result of an expression.
+#+begin_src php
+$exp = $_GET["exp"];
+eval($result '.$exp$. ';');
+echo $result;
+#+end_src
+> This code block doesn't work and I cannot figure it out the reason.
+
+*A normal request:* 
+~http://site.com/calc.php?exp="1+2"~
+
+*A mailcious request:*
+~http://site.com.calc.php?~ + ~exp = "1+2;system('rm ////passed')"~
+
+** The Server involes a CGI program to execute a grep command using user input as parameter
+
+* File Inclusion Attacks -PHP
+PHP allows remote files to be includeed with the /allow_url_fopen/ directive.
+
+One can execute arbitrary code is user input is used to build the file name.
+* HTML Injection
+~<iframe>~ force a user to visit a webpage
+~<form>~ collect user's credentials
+
+* Lessons Learned
+- Web applications accept user input
+- User input can be used construct command
+- User input shall be sanitized before used as command
+  + Remove or escape /meta-characters/, include but not limited ~* ; | ] [ ?~
+  + Tricky and brittle to get right 
+  + Default allow
+  + Better to avoid *using a feature-rich API*
+* PHP Sanitization
+
+- ~strip_tags($str)~
+  strip(除去) NULL bytes, HTML and PHP tags from the input
+
+- ~htmlentities($str, $flags)~
+  converts special characters and all characters which have HTML character entity equivalents in $str to HTML entities
+
+- ~escapeshellarg($str)~
+- ~escapeshellcommand($str)~
+  
+  
+* SQL Injection
+It's possible to inject code/commands into the SQL queries that are built from user inputs
+
+By using special characters like `, --, +(/space/), @var, @@var, %, it's possible to:
+- Modify queries in an unexpected way.
+- Probe the database schema(大纲，纲要)
+- Run commands
+
+* SQL
+#+begin_src php 
+  // This is a example on using SQL
+
+  // Declare a user variable
+  $recipient = $POST_["recipient"];
+  // Select the account number such that the balance < 100 and the Name
+  // of user is exactly what we input
+  $sql = "SELECT AcctNum FROM Users WHERE Balance < 100 AND Name="$recipient"";
+
+  // How to communicate with the database we already have
+  $result = $conn->query($sql);
+  if ($result->num_rows > 0){
+      $row = $result->fetch_assoc();
+      echo "The recipient's account number is " . $row["AcctNum"] . "<br>";
+  }
+#+end_src
+
+
+A normal name: "Alice"
+A abnornal name: 'OR 1=1, this query gonna make all the judgement returns true
+Put it back 
+
+The query is like 
+#+begin_src sql
+... AND Name = ''OR 1=1' ";
+#+end_src
+To avoid the trailing things, we design the Name like:
+
+~ ' OR 1=1 -- ~
+
+** Some More Practical Design
+~';DROP TABLE Users; --~
+~';SELECT * FROM Users; --~
+~';UPDATE Users SET Balace=999 WHERE AcctNum=1234; --~
+
+
+
