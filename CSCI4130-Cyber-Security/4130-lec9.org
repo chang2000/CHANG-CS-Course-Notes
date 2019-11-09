@@ -1,5 +1,4 @@
 #+title: SOP
-
 * SOP same origin policy
 - Frame Isolation
 ** Need:
@@ -34,3 +33,14 @@ a frame can load images css font from another origin but cannot inspect it
 a frame can also load JS code from another origin
 ** Relaxing SOP
 there are still some situations that we can relax the SOP for *xxx*
+** GIST: Practical Tricks of SOP
+*** The Definition of an origin
+Two URLs have the same origin if the /protocol/, /port/ and /host/ are the same for both.
+
+*Host:* www.facebook.com & facebook.com are two differnt host/server theoretically.
+
+
+
+
+
+
