@@ -1,0 +1,254 @@
+#+title: Concurrency
+* The Dialogue between Prof and student
+So, what is concurrency, my professor?
+
+Imagine we have a peach --
+
+There are alot of peaches on a table, and a lot of people who wish to eat them.
+Let's say we did it this way:
+
+Each eater first identifies a peach visually, and then tires to grab it and eat it. *What's wrong with this approach?*
+
+You might see a peach that somebody else also sees. If they get there first, when you reach out, no peach for you.
+
+S0 what we should do?
+
+A better way of going about this. Maybe /Maybe form a line, and when you get to the front, grab a peach and get on with it/
+
+But what's wrong about this approach? *
+
+Do I need to do all the work?
+Yes.
+
+We used to have many people grabbing for peaches all at once, which is faster. But in my way, we just go one at a time, which is correct but quite a bit slower.
+
+*The best kind of approach would be fast & correct, probably.*
+
+As it turns out, there are certain types of programs that we call /multi-threaded/ applications. 
+
+Each *thread* is kind of like an independent agent running around in this program, doing things on the program's behalf. 
+
+*Thread* access memory, like the peaches we talked about beofore.
+
+If we don't coordinate access to memory between threads, the program won't work as expected.
+
+Why this is OS related? Isn't this /application programming/? 
+*Reasons:*
+1) OS must support multi-threaded applications with promitives such as *lock* & *condition variables*.
+
+2) The *OS itself* was the first concurrent program -- it must access its own memory very carefully or many strange and terrible things will happen. It can get quite grisly.(恐怖的)
+
+* Lec12 Thread & Thread API
+** Introduction to Concurrency
+*** What we've done before
+- Virtualize a single CPU and turn it into muliple virtual CPUs. It creates the illusion that muliple programs runs at the same time.
+- Create the illusion of a large, private *virtual memory* 
+*** A new abstraction for a single running program -- *thread*
+A multi-threaded program has more than one point of execution.(Muliple PCs)
+Each thread is *very much like* a separate process, *expect* for one difference:
+/They share the same address space and thus can access the same data/
+
+
+*** Structure of a Thread
+A program counter that tracks where the program is fetching instructions from.
+
+Each thread has its own private set of registers it uses for computation; thus, 
+if there are two threads running on a single processor, when switching from running T1 to running T2, the *context switch* is quite similar to it in process.
+
+With processes, we have *process control blocks*(PCBs)
+Now, we'll need one or more *thread control blocks*(TCBs) to store the state of each thread of a process. 
+
+*A Major difference:*
+1. The address space remains the same(i.e. there is no need to switch which page table we are using)
+2. Concerns about stack.
+   A single-threaded process has a single stack. Usually resides at bottom of the address space. 
+   In a multi-threaded process, each thread runs independently, then we get muliple stack in it. The stacks are spread throughout the address space. 
+
+Any stack-allocated variables, parameters, return values, and other things that we put on the stack will be places in what is sometimes called *thread-local* storage, i.e., the stack of the relevant thread.
+
+It makes address space quite less beautiful and it may cause some trouble. However, it's generally OK, as stack do not generally have to be very large.
+
+*** Thread Creation
+Example code:
+#+begin_src c
+  #include <stdio.h>
+  #include <assert.h>
+  #include <pthread.h>
+  void *mythread(void *arg) {
+      printf("%s\n", (char *) arg);
+      return NULL;
+  }
+
+  int main(int argc, char *argv[]) {
+    pthread_t p1, p2;
+    int rc;
+    printf("main: begin\n");
+    // ~rc~ is just a variable to store the rv of pthread_create
+
+    rc = pthread_create(&p1, NULL, mythread, "A"); assert(rc == 0);
+    rc = pthread_create(&p2, NULL, mythread, "B"); assert(rc == 0);
+
+  // join waits for the threads to finish
+  // 
+    rc = pthread_join(p1, NULL); assert(rc == 0);
+    rc = pthread_join(p2, NULL); assert(rc == 0);
+    printf("main: end\n");
+    return 0;
+  }
+#+end_src
+Once a thread is created, it may start running right away. (depending on the whim of the scheduler). Alternatively, it may be put in a "ready" but not "running" state and thus not run yet. 
+
+After creating /T1/ and /T2/, the main thread then calls ~pthread_join()~, which waits for a /particular thread to complete./
+
+There is *NO* reason to assume that *a thread that is created first* will run *first*.
+
+Computer is much more harder to understand with concurrency.
+
+*** Why it get worse: *Shared Data*
+How thread interact with /shared data/?
+Given a case that two threads wish to update a global shared data. The code is like:
+#+begin_src c
+  #include <stdio.h>
+  #include <pthread.h>
+  #include "mythreads.h"
+
+  static volatile int counter = 0; 6
+  // mythread()
+  // Simply adds 1 to counter repeatedly, in a loop
+  // No, this is not how you would add 10,000,000 to
+  //a counter, but it shows the problem nicely.
+  void * mythread(void *arg){
+    printf("%s: begin\n", (char *) arg);
+    int i;
+    for (i = 0; i < 1e7; i++) {
+      counter = counter + 1;
+    }
+    printf("%s: done\n", (char *) arg);
+    return NULL;
+  }
+  //
+  //main()
+  // Just launches two threads (pthread_create)
+  // and then waits for them (pthread_join)
+  //
+  int main(int argc, char *argv[]){
+    pthread_t p1, p2;
+    printf("main: begin (counter = %d)\n", counter);
+    Pthread_create(&p1, NULL, mythread, "A");
+    Pthread_create(&p2, NULL, mythread, "B");
+
+  // join waits for the threads to finish
+    Pthread_join(p1, NULL);
+    Pthread_join(p2, NULL);
+    printf("main: done with both (counter = %d)\n", counter);
+    return 0;
+  }
+#+end_src
+
+*Some notes on the code:*
+1) We wrap the thread creation and join routines to simply exit on failure. We want to at least notice an error occurred(if it did), but not do anything very smart about it, like we can just exit it.
+
+   Thus ~Pthread_create~ simply calls ~pthread_create()~ and make sure the return code is 0, if it isn't, ~Pthread_create()~ just prints a message and exits.
+
+2) Instead of using two separate function bodies for the worker threads, we just use a single piece of code, and pass the thread an argument(/in this case, a string/) so we can have each thread print a different letter before its messages.
+3) *The most importantly*, what each worker is trying to do: add a number to the shared variable ~counter~, and do so 10 million times in a loop. Thus, the *desired* final result is 2*10e7.
+
+Compile a multi-threaded program:
+~gcc -o main main.c -Wall -pthread~
+
+Usually we cannot get out desired final result, we usually get some numbers slightly smaller than 2*10e7. *The computer cannot generate a deterministic result now*. 
+
+*WHY DOES THIS HAPPEN???*
+
+*** The Heart Of The Problem: *Uncontrolled Scheduling*
+Wish to add ~1~ to ~counter~, the code sequence in doing this in ~x86~,
+#+begin_src asm
+mov address, %eax
+add $0x1, %eax
+mov %eax, address
+#+end_src
+Thing like:
+When T1 enters this region of code, and counter now is 50, when finishes the increment and eax=51, *a time interrupt* happens. thus the system saves the state of the currently running thread(PC, the registers inclulding ~eax~), to the thread's TCB.
+
+However, when T2 starts running, the ~counter~ is still 50 beacuse it don't get updated due the *evil time interrupt*. When T2 finishes, ~counter~ becomes 51. Restore the T1's state, then running it. It will run the ~mov~ 51 to the counter, which causes no increment to ~counter~ beacuse ~counter~ is already 51 by T2.
+
+**** Race Condition
+This is called *race condition*: the results depend on the timing execution of the code. With some bad luck, we get the wrong result. 
+
+And the result is *indeterminate*.
+
+**** Critical section
+We call this code a critical section. 
+
+A critical section is a piece of code that accesses a shared variable(or a shared source), and must not be *concurrently executed* by more than one thread.
+
+**** Mutual Exclusion
+This property guaratees that if one thread is executing within the critical section, the others will be prevented from doing so.
+
+*Djikstra* is involved here!
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*** The Wish For Atomicity
+One way to solve this problem would be to have more powerful instructions that, in a single step, did exactly whatever we needed dont and thus removed the possibility of an untimly interrupt. 
+
+What if we have a super instruction like this:
+~memory-add 0x8049a41, $0x1~
+This instruction executes *atomically*, there is no between state. 
+Atomicity, means "as a unit", sometimes called "all or none"(全或無).
+We want to execute the *three lines of code* above all at once. 
+
+What we instead do is to ask the hardware for a few instructions upon which we can build a general set of what we call *synchronization primitives*. By using this and some help from the operating system, we will be able to build multi-threaded code that accesses critical sections in a synchronized and controlled manner, and thus reliably produces the correct result despite the challenging nature of concurrent execution. Cool?!
+
+This is the problem we will study in this section of the book.
+
+
+
+
+
+
+*** One More Problem: Waiting For Another
+As it turns out, there is another common interaction that arises, where one thread must wait for another to complete some action before it continues. This interaction arises, for example, whn a process performs a disk IO and is put to sleep; when the I/O completes, the process needs to be broused from its slumber so it can continue.
+
+So we will also study mechanisms to support this type of sleeping/waking interaction that is common in multi-threaded programs.
+*condition variables* is about this issue. 
+
+** CRUX: How to provide support for synchronization?
+- What support do we need from the hardware in order to build useful synchronization primitives? 
+- What support do we need from OS?
+- How can we build these primitives correctly and efficiently?
+- How can programs use them to get the desired results?
+
+
+
