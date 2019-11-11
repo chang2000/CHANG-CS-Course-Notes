@@ -1,0 +1,168 @@
+* The Church-Turing Thesis
+** Intro to Turing machines
+*** Introduction
+TM is a *much more powerful model*, it can do everything that a general computer can do. 
+
+Nonetheless, even a Turing machine cannot solve certain problems. These problems are beyond the theoretical limit of computation.
+
+- Uses an *infinite tape* as its unlimited memory. It has a tape head that can read and write symbols and move around on the tape.
+
+Initially the tape contains only the *input string*, and is blank everywhere else. 
+
+If the machine needs to store some information, it may *write information* on the tape. 
+
+To read the information /it has written/, the machine can move its head back over it. 
+
+The machine continues computing until it decides to produce an output. The outputs /accept/ and /reject/ are obtained by entering designated accepting and rejecting states. 
+*** Differences between FA & TM
+1. A tm can both read and write the tape.
+2. The read-write head can move both to the left and to the right.
+3. The tape is *infinite*
+4. The special states for rejecting and accepting take dffect immediately.
+
+*** A example: TM to test membership of {w#w | w \in {0,1}^*}
+
+The langauge B means a string comprises two identical strings separated by a # symbol.
+
+Imagine you are on a mile long road with inputs on the ground. How to determine the input is in B? *Zig-zag* to the correspinding palces on the two sides of the # and determine whether they match, is a obvious strategy.
+
+And we design a machine to work in that way. 
+M_1 = "On input string /w/
+1. Zig-zag across the tape to correspinding positions on either side of the /#/ symbol to check whether these positions contain the same symbol. 
+   If they do not, or if no /#/ is found, ~reject~. Cross off symbols as they are checked to keep track of which symbols correspond.
+2. When all symbols to the left of the ~#~ have been crossed off, check for any remaining symbols to the right of the ~#~, if any symbols remain, /reject/; otherwise, /accept/. 
+"
+
+
+
+
+
+
+
+*** Formal Definition of a Turing Machine
+
+The heart: transition function \sigma
+For a Turing machine, \sigma takes the form: Q X \gamma -> Q X \gamma X {L,R}. That is, when the machine is in a certain state q and the head is over a tape square containing a symbol a, and if \sigma(q,a) = (r,b,L)
+-> The machine writes the symbol b replacing the a, and goes to state r. The third componnent is either L or R and indicates whether the head moves to the ledt or right after writing. In this case, the L indicates a move to the left.
+
+A Turing machine is a 7-tuple, (Q, Σ, Γ, δ, q 0 , q accept , q reject ), where Q, Σ, Γ are all ﬁnite sets and
+1. Q is the set of states,
+2. Σ is the input alphabet not containing the blank symbol
+3. Γ is the tape alphabet, where ␣ ∈ Γ and Σ ⊆ Γ,
+4. δ: Q × Γ−→Q × Γ × {L, R} is the transition function,
+5. q 0 ∈ Q is the start state,
+6. q accept ∈ Q is the accept state, and
+7. q reject ∈ Q is the reject state, where q reject ≠ q accept .
+*** More on the definition:
+\capitalsigma does not contain the *blank space*, so the first blank appearing on the tape marks the end of the input. Once M has started, 
+the computation proceeds according to the rules described by the transition function. If M ever tries to move its head to the left off the left-hand end of the tape, the head stays in the same place for that move, even though the transition function indicates L. 
+
+- Current state
+- Current tape contents
+- Current head location
+*** Configuration
+A setting of these three items is called a *configuration*.
+
+ab q_1 a means that the elements on the tape is just like 
+a b a and state q_1 is point to the last a
+
+Say that configuration C_1 *yields* configuration C_2 if the Turing machine can legally go from C_1 to C_2 in a single step. We define:
+
+Suppose we have a, b and c in \gamma, as well as /u/ and /v/ in \gamma^* and states q_i and q_j. In that case, ua q_i bv and u q_j acv are two configurations, say that 
+
+/ua q_i bv/ yields /u q_j acv/
+
+*accepting configuration* is a configuration that contains q_acc
+*rejecting configuration* is a configuration that contains q_rej
+
+The above two are called *halting configuration*
+*** Language of TM
+A Turing machine M *accepts* input /w/ if a sequence of configuration C_1, C_2...,C_k exists, where
+
+1. C_1 is the start configuration of M on input /w/
+2. each C_i yields C_{i+1} and
+3. C_k is an accpeting configuration
+
+The collection of strings that M accepts is *language of M*, denoted by L(M)
+** Turing machine 
+*** Loop
+When a TM is on an input, three outcomes are possible: /accept, reject, loop/.
+*** Decider, Decidable
+We prefer a Turing machine that can *halt on all inputs*, such machines never loop. These machines are called *deciders* because they always make a decision to accept or reject. 
+
+Call a language L is *decidable* if some Turing machine decides it.
+
+Design a TM to recognize language B we mentioned above, ~w#w~
+
+*Until* reach ~#~
+    *Read* and remember entry
+    *Write* ~x~
+    *Move* right past ~#~ and past all ~x~'s.
+    *If* this entry is different, *reject*
+    *Write* ~x~
+    Move left past ~#~ and to right of first ~x~
+
+if you see only ~x~'s followed by \blank, *accept*
+Remember to review it at 
+2019.11.11 09:00
+
+Another Example: 
+
+L2 = {a^i b^j c^k | ij = k and i,j,k > 0}
+
+
+*** How to describ Turing Machines
+We rarely give complete state diagrams of Turing machines.
+
+We usually give a *high-level description* unless you're asked.
+
+We are interested in algorithms behind the Turing machines
+
+*** More Example
+L4 = {<G> | G is a connected undirected graph}
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+** Variants
+*** Multitape Turing Machine
+Different tape heads can move independently
+
+*Theorem*
+Every multiple Turing machine has an equivalent single-tape Turing machine
+
+PROOF:
+
+Show how to convert a multiple TM M to an equivalent single-tape TM S.
+The key idea is to show how to simulate M with S.
+
+Say that M has /k/ tapes. S simulates the effect of k tapes by storing their information on its single tape. 
+
+Use the new symbol ~#~ as a delimiter to separate the contents of different tapes. S must keep track of the locations of the /heads/. 
+
+Also, a single-tape Turing machine is a special case of the multi-tape Turing machine
+
+
+
+
+
+

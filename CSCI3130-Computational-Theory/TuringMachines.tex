@@ -1,0 +1,103 @@
+% Created 2019-11-10 Sun 17:22
+% Intended LaTeX compiler: pdflatex
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{grffile}
+\usepackage{longtable}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{textcomp}
+\usepackage{amssymb}
+\usepackage{capt-of}
+\usepackage{hyperref}
+\author{Tianchang WANG}
+\date{\today}
+\title{}
+\hypersetup{
+ pdfauthor={Tianchang WANG},
+ pdftitle={},
+ pdfkeywords={},
+ pdfsubject={},
+ pdfcreator={Emacs 26.3 (Org mode 9.1.9)}, 
+ pdflang={English}}
+\begin{document}
+
+\tableofcontents
+
+\section{The Church-Turing Thesis}
+\label{sec:orgbbf0803}
+\subsection{Turing machines}
+\label{sec:org84f11b0}
+\subsubsection{Introduction}
+\label{sec:org5213146}
+TM is a \textbf{much more powerful model}, it can do everything that a general computer can do. 
+
+Nonetheless, even a Turing machine cannot solve certain problems. These problems are beyond the theoretical limit of computation.
+
+\begin{itemize}
+\item Uses an \textbf{infinite tape} as its unlimited memory. It has a tape head that can read and write symbols and move around on the tape.
+\end{itemize}
+
+Initially the tape contains only the \textbf{input string}, and is blank everywhere else. 
+
+If the machine needs to store some information, it may \textbf{write information} on the tape. 
+
+To read the information \emph{it has written}, the machine can move its head back over it. 
+
+The machine continues computing until it decides to produce an output. The outputs \emph{accept} and \emph{reject} are obtained by entering designated accepting and rejecting states. 
+\subsubsection{Differences between FA \& TM}
+\label{sec:orgc769ac6}
+\begin{enumerate}
+\item A tm can both read and write the tape.
+\item The read-write head can move both to the left and to the right.
+\item The tape is \textbf{infinite}
+\item The special states for rejecting and accepting take dffect immediately.
+\end{enumerate}
+
+\subsubsection{A example: TM to test membership of \{w\#w | w \(\in\) \{0,1\}\(^{\text{*}}\)\}}
+\label{sec:org2f184da}
+
+The langauge B means a string comprises two identical strings separated by a \# symbol.
+
+Imagine you are on a mile long road with inputs on the ground. How to determine the input is in B? \textbf{Zig-zag} to the correspinding palces on the two sides of the \# and determine whether they match, is a obvious strategy.
+
+And we design a machine to work in that way. 
+M\(_{\text{1}}\) = "On input string \emph{w}
+\begin{enumerate}
+\item Zig-zag across the tape to correspinding positions on either side of the \emph{\#} symbol to check whether these positions contain the same symbol. 
+If they do not, or if no \emph{\#} is found, \texttt{reject}. Cross off symbols as they are checked to keep track of which symbols correspond.
+\item When all symbols to the left of the \texttt{\#} have been crossed off, check for any remaining symbols to the right of the \texttt{\#}, if any symbols remain, \emph{reject}; otherwise, \emph{accept}.
+\end{enumerate}
+"
+
+
+
+
+
+
+
+\subsubsection{Formal Definition of a Turing Machine}
+\label{sec:org4babc0c}
+
+The heart: transition function \(\sigma\)
+For a Turing machine, \(\sigma\) takes the form: Q X \(\gamma\) -> Q X \(\gamma\) X \{L,R\}. That is, when the machine is in a certain state q and the head is over a tape square containing a symbol a, and if \(\sigma\)(q,a) = (r,b,L)
+-> The machine writes the symbol b replacing the a, and goes to state r. The third componnent is either L or R and indicates whether the head moves to the ledt or right after writing. In this case, the L indicates a move to the left.
+
+A Turing machine is a 7-tuple, (Q, Σ, Γ, δ, q 0 , q accept , q reject ), where Q, Σ, Γ are all ﬁnite sets and
+\begin{enumerate}
+\item Q is the set of states,
+\item Σ is the input alphabet not containing the blank symbol
+\item Γ is the tape alphabet, where ␣ ∈ Γ and Σ ⊆ Γ,
+\item δ: Q × Γ−→Q × Γ × \{L, R\} is the transition function,
+\item q 0 ∈ Q is the start state,
+\item q accept ∈ Q is the accept state, and
+\item q reject ∈ Q is the reject state, where q reject ≠ q accept .
+\end{enumerate}
+\subsubsection{More on the definition:}
+\label{sec:org3266596}
+\capitalsigma 
+\end{document}

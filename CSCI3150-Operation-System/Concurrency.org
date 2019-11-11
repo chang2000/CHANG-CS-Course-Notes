@@ -252,3 +252,56 @@ So we will also study mechanisms to support this type of sleeping/waking interac
 
 
 
+** Thread API -- Code Practice
+
+*** CRUX: How to create and control *THREADS*
+What interfaces should the OS present for thread creation and control? 
+How should these interfaces be designed to enable *ease of use* as well as *utility*.
+
+*** Thread Creation
+#+begin_src c
+  #include <pthread.h>
+  int
+  pthread_create(       pthread_t * thread,
+                  const pthread_attr_t * attr,
+                        void * (*start_routine)(void*),
+                        void * arg);
+#+end_src
+- *thread*: a pointer to a structure of type ~pthread_t~, we use this structure to /interact/ with this thread, and pass it to ~pthread_create()~ to *initialize* it.
+
+- *attr*; specify any attributes this thread might have. In most cases we put ~NULL~ here.
+
+- ~(* start_routine)(void *)~ is the most complex but is just *asking*: which function should this thread start /running in/? We call it *function pointer* in C, and this just tells us the following is expected:
+
+  a functin name ~start_routine~, which is passed a single argument of type ~void *~, and which returns a value of type ~void *~ (a void pointer)
+
+- *arg*: is exactly the argument to be passed to the function where the thread begins execution. 
+
+
+
+
+
+
+
+
+
+
+
+
+*** Thread Completion 
+#+begin_src c
+int pthread_join(pthread_t thread, void **value_ptr);
+#+end_src
+
+This is a routine.
+
+- ~thread~: this is of type ~pthread_t~, and is used to specify which thread to wait for. The variable is initialized by the ~pthread_create()~ we talked before, if you keep it around, you can use it to wait for that thread to terminate.
+
+- ~**value_ptr~ is a pointer to the return value you expect to get back. because the routine can return anything, it is defined to return a pointer to
+
+
+
+
+
+
+

