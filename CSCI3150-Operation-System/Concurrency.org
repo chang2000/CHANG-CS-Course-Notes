@@ -257,7 +257,6 @@ So we will also study mechanisms to support this type of sleeping/waking interac
 *** CRUX: How to create and control *THREADS*
 What interfaces should the OS present for thread creation and control? 
 How should these interfaces be designed to enable *ease of use* as well as *utility*.
-
 *** Thread Creation
 #+begin_src c
   #include <pthread.h>
@@ -297,11 +296,42 @@ This is a routine.
 
 - ~thread~: this is of type ~pthread_t~, and is used to specify which thread to wait for. The variable is initialized by the ~pthread_create()~ we talked before, if you keep it around, you can use it to wait for that thread to terminate.
 
-- ~**value_ptr~ is a pointer to the return value you expect to get back. because the routine can return anything, it is defined to return a pointer to
+- ~**value_ptr~ is a pointer to the return value you expect to get back. because the routine can return anything, it is defined to return a pointer to *void*. pthread_join() change
+#+begin_src c
+  #include <stdio.h>
+  #include <pthread.h>
+  #include <assert.h>
+  #include <stdlib.h>
+  typedef struct __myarg_t {
+    int a;
+    int b;
+  } myarg_t; // input arg structure
 
+  typedef struct __myret_t {
+    int x;
+    int y;
+  } myret_t; //return arg structure
 
+  void *mythread(void *arg) {
+    myarg_t *m = (myarg_t *) arg;
+    printf("%d %d\n", m->a, m->b);
+    myret_t *r = malloc(sizeof(myret_t));
+    r->x = 1;
+    r->y = 2;
+    return (void *) r;
+  }
 
-
-
-
+  int main(int argc, char *argv[]) {
+    int rc;
+    pthread_t p;
+    myret_t *m;
+    myarg_t args;
+    args.a = 10;
+    args.b = 20;
+    pthread_create(&p, NULL, mythread, &args);
+    pthread_join(p, (void **) &m);
+    printf("returned %d %d\n", m->x, m->y);
+    return 0;
+  }
+#+end_src
 
