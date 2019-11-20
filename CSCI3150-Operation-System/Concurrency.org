@@ -251,7 +251,6 @@ So we will also study mechanisms to support this type of sleeping/waking interac
 - How can programs use them to get the desired results?
 
 
-
 ** Thread API -- Code Practice
 
 *** CRUX: How to create and control *THREADS*
@@ -267,25 +266,10 @@ How should these interfaces be designed to enable *ease of use* as well as *util
                         void * arg);
 #+end_src
 - *thread*: a pointer to a structure of type ~pthread_t~, we use this structure to /interact/ with this thread, and pass it to ~pthread_create()~ to *initialize* it.
-
 - *attr*; specify any attributes this thread might have. In most cases we put ~NULL~ here.
-
 - ~(* start_routine)(void *)~ is the most complex but is just *asking*: which function should this thread start /running in/? We call it *function pointer* in C, and this just tells us the following is expected:
-
-  a functin name ~start_routine~, which is passed a single argument of type ~void *~, and which returns a value of type ~void *~ (a void pointer)
-
+      a functin name ~start_routine~, which is passed a single argument of type ~void *~, and which returns a value of type ~void *~ (a void pointer)
 - *arg*: is exactly the argument to be passed to the function where the thread begins execution. 
-
-
-
-
-
-
-
-
-
-
-
 
 *** Thread Completion 
 #+begin_src c
@@ -313,8 +297,10 @@ This is a routine.
   } myret_t; //return arg structure
 
   void *mythread(void *arg) {
+    // Declare a pointer point to the input arg
     myarg_t *m = (myarg_t *) arg;
     printf("%d %d\n", m->a, m->b);
+    // Declare a return argument structure 
     myret_t *r = malloc(sizeof(myret_t));
     r->x = 1;
     r->y = 2;
@@ -334,4 +320,173 @@ This is a routine.
     return 0;
   }
 #+end_src
+
+When calling ~pthread_create()~ to create a thread you need a immediate ~pthread_join()~. 
+
+In fact, a easier way to accomplish this exact task， this is called *procedure call*. Clearly, we'll usually be creating more than just one thread and wait for it to complete.
+
+*Note*
+Not all multi-threaded used the join routine.
+
+A long-lived program may not need a join.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*** Locks
+
+Providing mutual exclusion（相互排斥） to a *critical section* via *locks*
+
+#+begin_src c
+int pthread_mutex_lock(pthread_mutex_t *mutex);
+int pthread_mutex_unlock(pthread_mutex_t *mutex);
+#+end_src
+锁住正在运行的进程
+
+When you have a region of code which is a *critical section*, and thus you need to protect it by *locks* in order to operate as desired. You acn probably imagine what the code looks like:
+
+#+begin_src c
+pthread_mutex_t lock;
+pthread_mutex_lock(&lock);
+x = x + 1 // or any other critical section
+pthread_mutex_unlock(&look);
+#+end_src
+
+Situation 1. 
+If no other thread holds the lock when ~pthread_mutex_lock()~ is called, the thread will acquire(get) the lock and enter the critical section.
+
+Situation 2. 
+If another thread does indeed holds the lock, the thread trying to grab the lock will not return form the call *until* it has acquired the lock. (When the locked-thread release the lock)
+
+Then we have a problem: many threads may be stuck waiting inside the lock acquisition function at a given time; only the thread with the lock acquired should call unlock.
+
+*However, the code is BROKEN*. 
+1. *lack of proper initialization*
+   All locks must be initialized with a correct value. 
+we often use
+#+begin_src c
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+#+end_src
+Or, a dynamic weak:
+
+#+begin_src c
+int rc = pthread_mutex_init(&lock, NULL); 
+assert(rc == 0); // check the success
+#+end_src
+
+2. It fails to check the error when calling lock and unlock.
+Just like virtually any library you call in a Unix system, these routines can also fail. If the program does not handle  the error properly, the failure will happen sliently and the *lock* is invalid.
+
+#+begin_src c
+  // Use this to keep your code clean but check for failures // Only use if exiting program is OK upon failure
+  void Pthread_mutex_lock(pthread_mutex_t *mutex) {
+    int rc = pthread_mutex_lock(mutex);
+    assert(rc == 0);
+  }
+#+end_src
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*** Two More Routines To Interact With Locks
+#+begin_src c
+  int pthread_mutex_trylock(pthread_mutex_t *mutex);
+  int pthread_mutex_timedlock(pthread_mutex_t *mutex,
+                              struct timespec *abs_timeout);
+#+end_src
+These two are used in lock *acquisition*
+
+~trylock~ returns failure if the lock is already held;
+~timedlock~ returns after a timeout or after acquiring the lock, whichever happens first. Thus, the timelock with a timeout of zero degenerates to the trylock case. Both versions should generally be avoided. 
+
+We will talk about it later. 
+
+
+*** Condition variables
+They are useful when some kind signaling must take place beteween threads, if one thread is waiting for another to do something before it can continue.
+
+Two primary routines are used by programs wishing to interact in this way:
+
+#+begin_src c
+int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
+int pthread_cond_signal(pthread_cond_t *cond);
+#+end_src
+
+To use a condition variable, one has to in addition have a lock that is associated with this condition. When calling either of the above routines, this *lock should be held.*
+
+1. ~pthread_cond_wait()~ puts the calling thread to sleep, and thus waits for some other thread to signal it, ususally when something in the progra has changed that the now-sleeping thread might care about. A typical usage is like:
+#+begin_src c
+  pthread_mutex_lock lock = PTHREAD_MUTEX_INITIALIZER;
+  pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+
+  Pthread_mutex_lock(&lock);
+
+  while (ready == 0)
+    Pthread_cond_wait(&cond, &lock);
+
+  Pthread_mutex_unlock(&lock);
+#+end_src
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
