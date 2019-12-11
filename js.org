@@ -1,0 +1,235 @@
+#+TITLE: Learning Javascript
+
+* Introduction
+** Change HTML content
+#+begin_src javascript
+document.getElementById("demo").innerHTML = "Javascript can change html";
+#+end_src
+** Change HTML Attribute
+#+begin_src html
+<button onclick="document.getElementById('myImage').src='pic_bulbon.gif'">Turn on the light</button>
+<img id="myImage" src="pic_bulboff.gif" style="width:100px">
+<button onclick="document.getElementById('myImage').src='pic_bulboff.gif'">Turn off the light</button>
+#+end_src
+** Change HTML styles
+#+begin_src javascript
+document.getElementById("demo").style.fontSize = "25px";
+#+end_src
+** Hide HTML elements
+* Where to Script
+** The <script> tag
+** Javascript Functions and Events
+** Javascript in <head> and <body>
+** External Javascript
+#+begin_src javascript
+    <script src="myScript.js"></script>
+#+end_src
+*** Why Use External Javascript?
+- Separate HTML and Javascript
+- Eaiser to read and maintain
+- *Cached Javascript files can speed up page loads*
+* Javascript Display Possibilities
+** Write to a HTML element Using innerHTML
+use document.getElementById(id) method
+** Write into HTML output use document.write()
+
+if we use document.write() after an HTML is *fully* loaded, it will delete all the
+exisinig HTML.
+** Write to a alert box, use window.alert()
+** Write to the browser console, use console.log()
+* Javascript Statement
+#+BEGIN_SRC javascript
+var x, y ,z;
+x = 5;
+y = 6;
+z =  x + y;
+#+END_SRC
+** use Semicolumn to separate statements
+** Ignore multi-spaces
+** Line Break
+If a Javascript statement soes not fit on one line, the best place to break it
+is after an operator.
+#+BEGIN_SRC js
+document.getElementById("demo").innerHTML =
+"Hello Dolly";
+#+END_SRC
+** Code blocks
+Javascript statements can be grouped together in code blocks, inside curly
+brackets,{}
+** Keywords
+| Keyword     | Description                                        |
+| break       | skip                                               |
+| continue    | skip                                               |
+| debugger    | Stop the execution and call the debugging function |
+| do...while  | skip                                               |
+| for         | for loop                                           |
+| function    | declare a function                                 |
+| if...else   | skip                                               |
+| switch      |                                                    |
+| return      |                                                    |
+| try...catch |                                                    |
+| var         | declare a variable                                 |
+Reserved words cannot be used as names for variables
+* Javascript Syntax
+Fixed values and variable values.
+** JavaScript Literals
+*Numbers* are written with or without decimals.
+*Strings* are written within double or single quotes.
+** Variables are used to *store* data values
+Uses a ~var~ to declare variables.
+** Operators
+** Expressions
+** Keywords
+are used toidentify actions to be performed
+** Comment
+~//~ or between ~/*~ and ~*/~ is treated as *comment*
+** Identifiers
+are names.
+
+In JS,identifiers are used to name variables(and keywords, and funtions and
+labels)
+
+The first character must a letter, or an ~_~, or a ~$~
+The subsequent character may be letters, digits, underscores or dollar signs.
+** JavaScript is case sensitive
+** JavaScript use Lower Camel Case
+like:
+* Date Type
+** One line, many variables
+** If you do /re-declare/
+It will not lose its value.
+* Aeithmetic Operators
+| Operator | Description                  |
+|----------+------------------------------|
+| +        | Addition                     |
+| *        | Multiplication               |
+| **       | Exponentiation (ES2016)      |
+| /        | Division                     |
+| %        | Modulus (Division Remainder) |
+| ++       | Increment                    |
+| --       | Decrement                    |
+** asides
+If you try to add string and number, it will be
+#+BEGIN_SRC javascript
+var y = 10 + 5 + "hello";
+var z = "hello" + 5 + 10;
+#+END_SRC
+#+result:
+'15hello'
+'hello510'
+* Comparison Operators
+| Operator | Description                       |
+|----------+-----------------------------------|
+| ==       | equal to                          |
+| ===      | equal value and equal type        |
+| !=       | not equal                         |
+| !==      | not equal value or not equal type |
+| >        | greater than                      |
+| <        | less than                         |
+| >=       | greater than or equal to          |
+| <=       | less than or equal to             |
+| ?        | ternary operator                  |
+|----------+-----------------------------------|
+* Logical Operators
+| Operator        | Description |
+|-----------------+-------------|
+| &&              | logical and |
+| double vertical | logical or  |
+| !               | logical not |
+
+* Type Operators
+-~typeof~ returns the type of a variable
+-~instanceof~ returns true if an object is an instance of an object type
+* 位运算，这个用的真的很多吗
+* JavaScript Types are Dynamic
+* Arrays
+var cars = ["saab", "Volvo", "BMW"];
+* Object
+Are written with curly braces ~{}~,
+var person ={firstName:"John", lastName:"Doe", age:50, eyeColor:"blue"}
+* Undefined
+var car; //value is undefined, type is undefined
+* ~null~ is nothing
+typeof null ---------> null
+if you set the value to be ~null~, the type will not be changed.
+* Diff between Undefined and Null
+~undefined~ and ~null~ are equal in value but different in type.
+* Primitive Data
+~typeof~ can return one of these primitive types:
+ - string
+ - number
+ - boolean
+ - undefined
+* Complex Data
+Can also return these complex data
+- function
+- object: returns for objects, arrays and null
+* JavaScript Functions
+function name(parameter1, parameter2, parameter3){
+    //code to be executed
+}
+* Function Invocation
+- When an event occurs(when a user clicks a button)
+- When it is invoked(called) from JavaScript code
+- Automatically
+* Objects in JavaScript
+** Initialization
+#+begin_src javascript
+var person = {
+  firstName: "John",
+  lastName: "Doe",
+  age: 50,
+  eyeColor: "blue"
+};
+#+end_src
+** Accessing Object Properties
+objectName.propertyName
+objectName["propertyName"]
+** Object Method
+#+begin_src javascript
+var person = {
+  firstName: "John",
+  lastName: "Doe",
+  id: 1234,
+  fullname: function(){
+      return this.firstName + " " + this.lastName;
+  }
+};
+#+end_src
+** Accessing Object Methods
+objectName.methodName()
+** Avoid Declare Strings, Numbers, and Booleans as Objects.
+* JavaScript Events
+HTML events are *things* that happen to HTML elements.
+
+When JavaScript is used in HTML pages, JavaScript can *react* on these events.S
+
+<element event='some JavaScript'>
+** Some Common HTML Events
+| Event       | Description                                    |
+|-------------+------------------------------------------------|
+| onchange    | An HTML element has been changed               |
+| onclick     | the user clicks an HTML element                |
+| onmouseover | The user moves the mouse over the HTML element |
+| onmouseaway | The user moves the mouse away the HTML element |
+| onkeydown   | The user pushes a keyboard key                 |
+| onload      | The browser finishes loading the page          |
+* JavaScript String
+** length
+#+begin_src javascript
+var txt = "ABCDEFGHIJKLMNOPQRST";
+var sln = txt.length;
+#+end_src
+** Esacaping Character
+** Strings can also be Objects
+However, if we have two strings that has same content, only if they are not
+*both objs*, they are always equal.
+** Finding a String in a String
+#+begin_src javascript
+var str = "Please locate where 'locate' occurs!";
+var pos = str.indexOf("locate");
+#+end_src
+It will return the first letter and the first occurance of the letter.(Start
+from 1)
+
+** Search a String in a String

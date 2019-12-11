@@ -1,0 +1,33 @@
+#+TITLE: Locks
+This note is adapted with the Chap 28 *Lock* of Operating System
+
+* The Basic Idea
+Recall the ~balance = balance + 1~ case.
+#+begin_src c
+lock_t mutex;
+lock(&mutex);
+balance = balance + 1;
+unlock(&mutex);
+#+end_src
+* Pthread Locks
+
+The name that the POSIX library uses for a lock is a *mutex*, which stands for
+mutual exclusion.
+
+The code is like
+#+begin_src c
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_lock(&lock);
+balance = balance + 1;
+pthread_mutex_unlock(&lock);
+#+end_src
+
+We have different locking strategy, coarse-grained and fine-grained.
+
+* Building a lock
+*CRUX*:
+How to build a efficient lock? Efficient locks provided mutual exclusion at low
+cost, and also might attaina few other properties we discussed below.
+What hardware support is needed? What *OS Support*
+
+* 

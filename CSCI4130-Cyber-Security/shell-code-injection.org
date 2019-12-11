@@ -6,9 +6,11 @@
 #+LATEX_HEADER: \usepackage{fancyhdr}
 #+LATEX_HEADER: \setlength{\headheight}{15.0pt}
 #+LATEX_HEADER: \pagestyle{fancy}
-\newpage
 
-* Prerequisites: 
+
+#+HUGO_BASE_DIR: ~/Project/blog/
+#+HUGO_SECTION: post
+* Prerequisites:
 Refer to this
 \href{https://chang2000.github.io/blog/2019/09/29/Exploit/}{*NOTE*}
 
@@ -88,10 +90,8 @@ Convert the shellcode to
 
 
 ** Find a possible place to inject shellcode
-
 In the example, ~buf~ is a perfect target because we can modify it as
 we like. How do we know what address ~buf~ will be loaded in stack?
 
 Use *GDB*: ~gdb -q inj~ to find the address of the buffer.
-
-** Compose the injection command
+** Then follow the same rule to compose the injection

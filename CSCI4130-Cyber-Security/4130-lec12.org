@@ -1,5 +1,4 @@
 #+title: XSS and UI-based Attacks
-
 * XSS - Cross Site Scripting
 ** Introduction
 - SOP prohibits JavaScript's cross-origin access 
@@ -16,7 +15,6 @@ Actually there are many types of XSS attacks and we only talk about two of them
 
 - *Reflected XSS attacks*
   The *injected code* is reflected off the victim server, a error message or other things can be controlled by attacker
-
 
 ** Reflected XSS attacks
 - The attacker *embeds* the malicious script in the URL of another server.

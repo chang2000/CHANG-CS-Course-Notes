@@ -1,0 +1,9 @@
+#+title:Decidability
+* Problems about automata
+For a automata, we can formulate this question as a /langauge/.
+A_{DFA} = {<D,w> | D is a DFA that accepts input /w/}
+*** Is A_{DFA} *decidable*?
+We want to say if the DFA is decidable
+~((q0,q1)  (a,b) ((q0,a,q0)(q0,b,q1)(q1,a,q0)(q1,b,q1)) (q0) (q1))(abb)~
+
+| Q | Sigma | sigma | q_0 | q_acc | input string |

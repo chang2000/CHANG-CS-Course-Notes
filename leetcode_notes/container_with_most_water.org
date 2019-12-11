@@ -1,0 +1,67 @@
+#+TITLE: Greedy Algo: Container With Most Water
+#+HUGO_BASE_DIR: ~/Project/blog/
+#+HUGO_SECTION: post
+#+HUGO_TAG: tech
+
+* Introduction
+Given n non-negative integers a1,a2,...,an, where each represents a point at
+coordinate (i,ai). n vertical lines are drawn such that the two endpoints of
+line i is at (i, ai ) and (i, 0). Find two lines, which together with x-axis
+forms a container, such that the container contains the most water.
+
+Note: You may not slant the container.
+
+* The very first impression
+There is a super direct approach for such problem - transverse all the
+possibilities and thus find the maximum value. However, this solution fails on
+some large input and cannot AC on LeetCode. There is indeed another faster
+approach.
+
+* Greedy Approach
+The background of this problem is *Cask Effect*, which indicates that the total
+amout of water that a cask can contain is determined by the shorest componnent
+wood.
+
+So, what if we're given a configuration(means which two vertical lines we
+chose), and we want to explore which direction to expand to find the maximum
+area, what should you do?
+
+For convinience, note that the v.l with smaller index is ~start~, the other one
+is ~end~.
+
+The conclusion is:
+#+begin_src python
+if height[start] < height[end]:
+    start += 1
+else:
+    end -= 1
+#+end_src
+* Why we do so?
+
+This idea is totally driven by *Greedy Approach*.
+
+Given that two different pole, and ~start~ is the shorter one. What direction do
+you want to expand?
+
+Definitely the short one. It's all because that the area is highly determined by
+the shorted board. And in the /from endpoint to the middle/ transverse scheme,
+we should follow the fashion.
+
+Thus the code is like
+#+begin_src python
+def container_with_most_water(height):
+    start = 0
+    end = len(height） - 1
+    res = -1
+    while start < end:
+        area = (end - start) * min(height[start],height[end])
+        res - max(area, res)
+        if height[start] < height[end]:
+            start += 1
+        else:
+            end -= 1
+    return res
+
+#+end_src
+Time Complexity: O(n)
+Space Complexity: O(1)

@@ -21,7 +21,6 @@
   + *REALM* specifies a group of resources on the server
 - The client must include an *Authentication header field* with valid credentials.
 
-* HTTP Authentication
 From the web server's perspective, HTTP authentication enables basic *access control*.
 ** 401 Unantuorized
 HTTP/1.1 401 Unantuorized
@@ -31,10 +30,10 @@ WWW-AuthenticateL Basic realm="xxx"
 ...
 
 ** HTTP is Stateless
-the http server is not required to retain(保留) information or status about each user for the duration of multiple request.
+the http server is not required to *retain* (保留) information or status about each user for the duration of multiple request.
 
 A *web application* can track state over multiple requests by
-- http cookies
+- HTTP cookies
 - server side sessions
 - Embedding information in the returned page
   - Hidden variables within web forms
@@ -44,6 +43,18 @@ A *web application* can track state over multiple requests by
 A session is a sequence of HTTP request and response transactoins associated to a user
 
 This is a concept beyond the HTTP, thus needs to be implemented at the application level
+我的理解就是，session并不是包含在HTTP中的一部分，他是对HTTP的操作
+
+
+** Implementation of Sessions
+a client send *HTTP* request to the server, the server sends requests to the *CGI Program*
+
+/Aside: cgi means common gateway interface/, it takes the repoonsibility of transferring data.
+CGI programs are short-lived, so we need to store the infomation in the server's persistent storage.
+
+Then the CGI program will respose to the server, the server will send the HTTP response to the client
+
+When we do this multiple times, it can be called a session, which will be saved on the server side.
 
 ** Basic Authentication
 - A form is used to send the credentials(over a TLS-protected channel) to a server-side application
@@ -54,7 +65,7 @@ This is a concept beyond the HTTP, thus needs to be implemented at the applicati
 
 ** HTTP Cookie
 - it's a small piece of data sent from/set by a *website*
-- Often stored on the user's computer by web browser
+- Often stored on the user's computer by web browser(*on the client side*)
 - Automatically sent with a HTTP request by the browser
 - Designed as a reliable mechanism to help web applications keep states at the client side
 - Are only accessible by the website that sets them
@@ -77,6 +88,7 @@ Domain=.foo.com; HttpOnly
 if *domain* is not specified, it's set as a host-only cookie(IE for exception)
 if *path* is specified, the cookie is only used when requesting pages contained in the correspinding path
 if *path* is *NOT* specified, the path of the requested resource is used
+
 * Client-side Access to Cookie
 - Reading a cookie
   ~var cookies = document.cookie~
@@ -86,8 +98,23 @@ if *path* is *NOT* specified, the path of the requested resource is used
   /It does not overwrite all existing cookies/
 - Delete a cookie
   ~document.cookie = "name=value; expires=PAST TIME;"~
-  
-* CSRF
+ 
+* Cookie Policy
+- A website might try to set cookies for another website
+- The browser checks if the website is allowed to set a cookie
+- Valid Domain can be any *domian suffix* of the hostname of the URL, except for the *TLD*
+|suffix|词尾|
+|prefix|词首|
+
+For example, ~a.abc.com~
+*Allowed*: ~.a.abc.com~ ~.abc.com~
+*Not Allowed*: ~.b.abc.com~ ~.a.abcde.com~ ~.com~
+*TLD*: top level domain, for lower level domain, that is, the last part of the DOMAIN
+
+- The browser decides which cookies to send when visiting a particular URL.
+- It sends all cookies in URL scope
+
+* CSRF(Cross Site Request Forgery)
 In CSRF attacks, a malicious server or JavaScript code tricks the user into performing actoins on another web application
 - Posting a new message
 - Deleting a record
@@ -108,3 +135,34 @@ Trick the user into her/his web page at the right time.
 <!-- This is the point! -->
   </body> </html>
 #+end_src
+
+** Review: What is cookie
+Since HTTP server is *stateless*, what we are going to do
+
+** The Process
+The whole process is like:
+1. Visits bank.com and establishes a session
+2. bank.com will send a cookieto the client
+3. When the client stated to visit the evil.com
+4. A page containing URL to bank is returned by the *evil server*
+5. Then the will send a *forged* request to the bank with the right cookie
+6. Back acts on the request of the client
+
+** How to defense CSRF attack
+*** Avoid use ~GET~ when exporting funcionality
+- However, one can use JavaScript to create a form to send a ~POST~ request.
+*** Referer Validation
+the referer header field indicates which URL initiated the HTTP request
+
+*Referer*
+http://www.bank.com/transfer.html
+
+This must be implemented at the server side
+*** Secret Token Validation
+~<input type=hidden name="token" value = "8x13..">~
+This must be implemented at the server side
+
+
+
+
+

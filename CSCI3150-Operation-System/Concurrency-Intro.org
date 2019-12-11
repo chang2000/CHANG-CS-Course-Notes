@@ -250,7 +250,6 @@ So we will also study mechanisms to support this type of sleeping/waking interac
 - How can we build these primitives correctly and efficiently?
 - How can programs use them to get the desired results?
 
-
 ** Thread API -- Code Practice
 
 *** CRUX: How to create and control *THREADS*
@@ -358,7 +357,6 @@ A long-lived program may not need a join.
 
 
 
-
 *** Locks
 
 Providing mutual exclusion（相互排斥） to a *critical section* via *locks*
@@ -425,8 +423,6 @@ Just like virtually any library you call in a Unix system, these routines can al
 
 
 
-
-
 *** Two More Routines To Interact With Locks
 #+begin_src c
   int pthread_mutex_trylock(pthread_mutex_t *mutex);
@@ -439,7 +435,6 @@ These two are used in lock *acquisition*
 ~timedlock~ returns after a timeout or after acquiring the lock, whichever happens first. Thus, the timelock with a timeout of zero degenerates to the trylock case. Both versions should generally be avoided. 
 
 We will talk about it later. 
-
 
 *** Condition variables
 They are useful when some kind signaling must take place beteween threads, if one thread is waiting for another to do something before it can continue.

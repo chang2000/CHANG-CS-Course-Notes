@@ -57,7 +57,6 @@ One can execute arbitrary code is user input is used to build the file name.
 - ~escapeshellarg($str)~
 - ~escapeshellcommand($str)~
   
-  
 * SQL Injection
 It's possible to inject code/commands into the SQL queries that are built from user inputs
 
